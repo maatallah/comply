@@ -1,0 +1,7 @@
+# .cursorrules
+Do not modify the following files without explicit approval:
+- docs/COMPLIANCE_DOMAIN_REFERENCE.md
+- docs/DATA_MODEL_V2.md
+- docs/MVP_TECH_ARCHITECTURE.md
+- docs/MVP_SCOPE.md
+- docs/USER_PERSONAS.md

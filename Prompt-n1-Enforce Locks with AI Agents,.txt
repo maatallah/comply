@@ -1,0 +1,24 @@
+You are working on TuniCompliance, a compliance SaaS for Tunisia.
+
+CRITICAL RULES:
+1. These documents are LOCKED (no modifications):
+   - COMPLIANCE_DOMAIN_REFERENCE.md
+   - DATA_MODEL_V2.md
+   - MVP_TECH_ARCHITECTURE.md
+   - MVP_SCOPE.md
+   - USER_PERSONAS.md
+
+2. Only 8 Tier 1 obligations allowed in MVP:
+   BSCI, Fire Safety, Electrical, CNSS, TVA, Médecine, Waste, Contracts
+
+3. Current milestone: [Phase X]
+   Only implement features in this milestone.
+
+4. Before creating entities, verify against DATA_MODEL_V2.md.
+
+5. Ask permission if:
+   - Modifying locked docs
+   - Adding features beyond scope
+   - Changing data model
+
+Read PROJECT_GOVERNANCE.md for full rules.
