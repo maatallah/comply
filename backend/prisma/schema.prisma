@@ -1,0 +1,247 @@
+// Prisma Schema - TuniCompliance
+// Auto-generated from DATA_MODEL_V2.md
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ==================== COMPANY & USERS ====================
+
+model Company {
+  id             String   @id @default(uuid())
+  legalName      String   @map("legal_name")
+  tradeName      String?  @map("trade_name")
+  taxId          String   @unique @map("tax_id") // Tunisia: XXXXXXX/X/A/M/XXX
+  cnssId         String?  @map("cnss_id")
+  activitySector String   @map("activity_sector") // TEXTILE, CONSTRUCTION, etc.
+  companySize    String   @map("company_size") // SMALL, MEDIUM, LARGE
+  employeeCount  Int?     @map("employee_count")
+  address        String?
+  city           String?
+  region         String?
+  country        String   @default("TN")
+  phone          String?
+  email          String?
+  website        String?
+  isActive       Boolean  @default(true) @map("is_active")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  users       User[]
+  obligations Obligation[]
+  deadlines   Deadline[]
+  checks      Check[]
+  audits      Audit[]
+  alerts      Alert[]
+
+  @@map("companies")
+}
+
+model User {
+  id                String   @id @default(uuid())
+  companyId         String   @map("company_id")
+  email             String   @unique
+  passwordHash      String   @map("password_hash")
+  firstName         String   @map("first_name")
+  lastName          String   @map("last_name")
+  role              String   // COMPANY_ADMIN, COMPLIANCE_OFFICER, EMPLOYEE
+  phone             String?
+  preferredLanguage String   @default("fr") @map("preferred_language") // fr, ar
+  isActive          Boolean  @default(true) @map("is_active")
+  lastLoginAt       DateTime? @map("last_login_at")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  checks  Check[]
+  alerts  Alert[]
+
+  @@map("users")
+}
+
+// ==================== REGULATIONS & OBLIGATIONS ====================
+
+model Regulation {
+  id            String   @id @default(uuid())
+  code          String   @unique // e.g., "Décret 75-503"
+  titleFr       String   @map("title_fr")
+  titleAr       String?  @map("title_ar")
+  authority     String   // PROTECTION_CIVILE, CNSS, ANPE, etc.
+  category      String   // HSE, FISCAL, SOCIAL, ENVIRONMENTAL, BRAND_AUDIT, QUALITY
+  descriptionFr String?  @map("description_fr") @db.Text
+  descriptionAr String?  @map("description_ar") @db.Text
+  effectiveDate DateTime? @map("effective_date")
+  sourceUrl     String?  @map("source_url")
+  isActive      Boolean  @default(true) @map("is_active")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  obligations Obligation[]
+
+  @@map("regulations")
+}
+
+model Obligation {
+  id             String   @id @default(uuid())
+  companyId      String   @map("company_id")
+  regulationId   String   @map("regulation_id")
+  titleFr        String   @map("title_fr")
+  titleAr        String?  @map("title_ar")
+  descriptionFr  String?  @map("description_fr") @db.Text
+  descriptionAr  String?  @map("description_ar") @db.Text
+  category       String   // HSE, FISCAL, SOCIAL, etc.
+  frequency      String   // MONTHLY, QUARTERLY, ANNUAL, BIENNIAL, TRIENNIAL, CONTINUOUS
+  riskLevel      String   @map("risk_level") // LOW, MEDIUM, HIGH, CRITICAL
+  penalty        String?  @db.Text // Description of penalties
+  applicableTo   String[] @default([]) @map("applicable_to") // Company sizes/sectors
+  documentUrl    String?  @map("document_url")
+  isActive       Boolean  @default(true) @map("is_active")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  company    Company     @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  regulation Regulation  @relation(fields: [regulationId], references: [id])
+  controls   Control[]
+  deadlines  Deadline[]
+
+  @@map("obligations")
+}
+
+// ==================== CONTROL / CHECK / EVIDENCE ====================
+
+model Control {
+  id            String   @id @default(uuid())
+  companyId     String   @map("company_id")
+  obligationId  String   @map("obligation_id")
+  titleFr       String   @map("title_fr")
+  titleAr       String?  @map("title_ar")
+  descriptionFr String?  @map("description_fr") @db.Text
+  descriptionAr String?  @map("description_ar") @db.Text
+  controlType   String   @map("control_type") // DOCUMENT, INSPECTION, TRAINING, CERTIFICATION
+  expectedEvidence String?  @map("expected_evidence") // What proof is needed
+  frequency     String   // How often this control should be performed
+  isActive      Boolean  @default(true) @map("is_active")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  obligation Obligation @relation(fields: [obligationId], references: [id], onDelete: Cascade)
+  checks     Check[]
+
+  @@map("controls")
+}
+
+model Check {
+  id           String   @id @default(uuid())
+  companyId    String   @map("company_id")
+  controlId    String   @map("control_id")
+  performedBy  String   @map("performed_by") // User ID
+  checkDate    DateTime @map("check_date")
+  status       String   // COMPLIANT, NON_COMPLIANT, PARTIAL, PENDING
+  findings     String?  @db.Text // Inspection notes
+  correctiveActions String? @map("corrective_actions") @db.Text
+  nextCheckDue DateTime? @map("next_check_due")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  company   Company    @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  control   Control    @relation(fields: [controlId], references: [id], onDelete: Cascade)
+  user      User       @relation(fields: [performedBy], references: [id])
+  evidence  Evidence[]
+
+  @@map("checks")
+}
+
+model Evidence {
+  id          String   @id @default(uuid())
+  companyId   String   @map("company_id")
+  checkId     String   @map("check_id")
+  fileName    String   @map("file_name")
+  filePath    String   @map("file_path") // Path in storage
+  fileType    String   @map("file_type") // PDF, JPG, PNG, etc.
+  fileSize    Int      @map("file_size") // Bytes
+  uploadedAt  DateTime @default(now()) @map("uploaded_at")
+  description String?  @db.Text
+  isValid     Boolean  @default(true) @map("is_valid")
+
+  // Relations
+  check Check @relation(fields: [checkId], references: [id], onDelete: Cascade)
+
+  @@map("evidence")
+}
+
+// ==================== DEADLINES & ALERTS ====================
+
+model Deadline {
+  id            String   @id @default(uuid())
+  companyId     String   @map("company_id")
+  obligationId  String   @map("obligation_id")
+  dueDate       DateTime @map("due_date")
+  status        String   @default("PENDING") // PENDING, COMPLETED, OVERDUE
+  completedAt   DateTime? @map("completed_at")
+  reminderSent  Boolean  @default(false) @map("reminder_sent")
+  isRecurring   Boolean  @default(false) @map("is_recurring")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  company    Company    @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  obligation Obligation @relation(fields: [obligationId], references: [id], onDelete: Cascade)
+
+  @@map("deadlines")
+}
+
+model Alert {
+  id           String   @id @default(uuid())
+  companyId    String   @map("company_id")
+  userId       String?  @map("user_id") // Recipient
+  type         String   // DEADLINE_REMINDER, OVERDUE, NON_COMPLIANCE, AUDIT_SCHEDULED
+  severity     String   // LOW, MEDIUM, HIGH, CRITICAL
+  titleFr      String   @map("title_fr")
+  titleAr      String?  @map("title_ar")
+  messageFr    String   @map("message_fr") @db.Text
+  messageAr    String?  @map("message_ar") @db.Text
+  isRead       Boolean  @default(false) @map("is_read")
+  isSent       Boolean  @default(false) @map("is_sent") // Email sent?
+  sentAt       DateTime? @map("sent_at")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  // Relations
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  user    User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@map("alerts")
+}
+
+// ==================== AUDITS ====================
+
+model Audit {
+  id            String   @id @default(uuid())
+  companyId     String   @map("company_id")
+  auditType     String   @map("audit_type") // BSCI, DISNEY, FIRE_SAFETY, etc.
+  auditor       String   // Company name or inspector
+  scheduledDate DateTime @map("scheduled_date")
+  completedDate DateTime? @map("completed_date")
+  status        String   @default("SCHEDULED") // SCHEDULED, IN_PROGRESS, COMPLETED, FAILED
+  score         Int?     // 0-100 if applicable
+  findings      String?  @db.Text
+  reportUrl     String?  @map("report_url")
+  nextAuditDue  DateTime? @map("next_audit_due")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@map("audits")
+}
