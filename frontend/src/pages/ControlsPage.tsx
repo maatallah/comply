@@ -11,6 +11,7 @@ interface Control {
     frequency: string;
     obligation?: {
         titleFr: string;
+        titleAr?: string;
     };
 }
 
@@ -54,16 +55,16 @@ export default function ControlsPage() {
     return (
         <div>
             <div className="page-header">
-                <h1 className="page-title">{t('nav.controls')}</h1>
+                <h1 className="page-title">{t('controls.title')}</h1>
             </div>
 
             {controls.length === 0 ? (
                 <div className="card">
                     <div className="empty-state">
                         <CheckSquare size={48} />
-                        <p>Aucun contrôle défini</p>
+                        <p>{t('controls.noData')}</p>
                         <p style={{ fontSize: '0.875rem' }}>
-                            Les contrôles seront ajoutés pour vos obligations
+                            {t('controls.noDataHint')}
                         </p>
                     </div>
                 </div>
@@ -73,10 +74,10 @@ export default function ControlsPage() {
                         <table>
                             <thead>
                                 <tr>
-                                    <th>Contrôle</th>
-                                    <th>Type</th>
-                                    <th>Fréquence</th>
-                                    <th>Obligation</th>
+                                    <th>{t('controls.control')}</th>
+                                    <th>{t('controls.type')}</th>
+                                    <th>{t('obligations.frequency')}</th>
+                                    <th>{t('obligations.obligation')}</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -91,12 +92,14 @@ export default function ControlsPage() {
                                         </td>
                                         <td>
                                             <span className={`badge ${TYPE_COLORS[control.controlType] || 'info'}`}>
-                                                {control.controlType}
+                                                {t(`controlType.${control.controlType}`, control.controlType)}
                                             </span>
                                         </td>
-                                        <td>{control.frequency}</td>
+                                        <td>{t(`frequency.${control.frequency}`, control.frequency)}</td>
                                         <td style={{ fontSize: '0.875rem', color: 'var(--gray-500)' }}>
-                                            {control.obligation?.titleFr}
+                                            {i18n.language === 'ar' && control.obligation?.titleAr
+                                                ? control.obligation.titleAr
+                                                : control.obligation?.titleFr}
                                         </td>
                                     </tr>
                                 ))}

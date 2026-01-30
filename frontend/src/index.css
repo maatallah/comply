@@ -17,12 +17,12 @@
   --gray-700: #374151;
   --gray-800: #1f2937;
   --gray-900: #111827;
-  
+
   /* Sidebar */
   --sidebar-bg: #1e293b;
   --sidebar-text: #cbd5e1;
   --sidebar-active: #3b82f6;
-  
+
   /* Spacing */
   --radius: 8px;
   --radius-lg: 12px;
@@ -98,6 +98,11 @@ html[dir="rtl"] .main-content {
   border-radius: var(--radius);
   margin-bottom: 0.25rem;
   transition: all 0.2s;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+  font-family: inherit;
 }
 
 .nav-link:hover {
@@ -108,6 +113,14 @@ html[dir="rtl"] .main-content {
 .nav-link.active {
   background: var(--sidebar-active);
   color: white;
+}
+
+button.nav-link {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+button.nav-link:hover {
+  background: rgba(255, 255, 255, 0.15);
 }
 
 .sidebar-footer {
@@ -218,7 +231,8 @@ table {
   border-collapse: collapse;
 }
 
-th, td {
+th,
+td {
   padding: 1rem;
   text-align: left;
   border-bottom: 1px solid var(--gray-200);

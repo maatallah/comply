@@ -11,6 +11,7 @@ interface Deadline {
     obligation?: {
         id: string;
         titleFr: string;
+        titleAr?: string;
     };
 }
 
@@ -21,7 +22,7 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 export default function DeadlinesPage() {
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
     const api = useApi();
 
     const [deadlines, setDeadlines] = useState<Deadline[]>([]);
@@ -48,7 +49,6 @@ export default function DeadlinesPage() {
         try {
             const result = await api.completeDeadline(id);
             if (result.success) {
-                // Refresh the list
                 fetchDeadlines();
             }
         } catch (error) {
@@ -58,7 +58,8 @@ export default function DeadlinesPage() {
 
     const formatDate = (dateString: string) => {
         const date = new Date(dateString);
-        return date.toLocaleDateString('fr-TN', {
+        const locale = i18n.language === 'ar' ? 'ar-TN' : 'fr-TN';
+        return date.toLocaleDateString(locale, {
             day: '2-digit',
             month: 'short',
             year: 'numeric',
@@ -83,9 +84,9 @@ export default function DeadlinesPage() {
                 <div className="card">
                     <div className="empty-state">
                         <Clock size={48} />
-                        <p>Aucune échéance planifiée</p>
+                        <p>{t('deadlines.noData')}</p>
                         <p style={{ fontSize: '0.875rem' }}>
-                            Les échéances seront créées pour vos obligations
+                            {t('deadlines.noDataHint')}
                         </p>
                     </div>
                 </div>
@@ -95,18 +96,20 @@ export default function DeadlinesPage() {
                         <table>
                             <thead>
                                 <tr>
-                                    <th>Obligation</th>
+                                    <th>{t('obligations.obligation')}</th>
                                     <th>{t('deadlines.dueDate')}</th>
                                     <th>{t('obligations.status')}</th>
-                                    <th>Récurrent</th>
-                                    <th>Action</th>
+                                    <th>{t('deadlines.recurring')}</th>
+                                    <th>{t('deadlines.action')}</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {deadlines.map((deadline) => (
                                     <tr key={deadline.id}>
                                         <td style={{ fontWeight: 500 }}>
-                                            {deadline.obligation?.titleFr}
+                                            {i18n.language === 'ar' && deadline.obligation?.titleAr
+                                                ? deadline.obligation.titleAr
+                                                : deadline.obligation?.titleFr}
                                         </td>
                                         <td>
                                             <span style={{
@@ -120,12 +123,10 @@ export default function DeadlinesPage() {
                                         </td>
                                         <td>
                                             <span className={`badge ${STATUS_COLORS[deadline.status] || 'info'}`}>
-                                                {deadline.status === 'PENDING' && t('deadlines.pending')}
-                                                {deadline.status === 'COMPLETED' && t('deadlines.completed')}
-                                                {deadline.status === 'OVERDUE' && t('deadlines.overdue')}
+                                                {t(`status.${deadline.status.toLowerCase()}`, deadline.status)}
                                             </span>
                                         </td>
-                                        <td>{deadline.isRecurring ? 'Oui' : 'Non'}</td>
+                                        <td>{deadline.isRecurring ? t('deadlines.yes') : t('deadlines.no')}</td>
                                         <td>
                                             {deadline.status !== 'COMPLETED' && (
                                                 <button

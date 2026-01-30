@@ -41,7 +41,7 @@ export default function Layout() {
                 </div>
 
                 <nav className="sidebar-nav">
-                    <NavLink to="/" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
+                    <NavLink to="/" end className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
                         <LayoutDashboard size={20} />
                         {t('nav.dashboard')}
                     </NavLink>

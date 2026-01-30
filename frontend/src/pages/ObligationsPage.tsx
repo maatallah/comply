@@ -78,9 +78,9 @@ export default function ObligationsPage() {
                         value={filter}
                         onChange={(e) => setFilter(e.target.value)}
                     >
-                        <option value="">{t('common.filter')}: Tous</option>
+                        <option value="">{t('common.filter')}: {t('obligations.filterAll')}</option>
                         {categories.map(cat => (
-                            <option key={cat} value={cat}>{cat}</option>
+                            <option key={cat} value={cat}>{t(`category.${cat}`, cat)}</option>
                         ))}
                     </select>
                 </div>
@@ -99,11 +99,11 @@ export default function ObligationsPage() {
                         <table>
                             <thead>
                                 <tr>
-                                    <th>Obligation</th>
-                                    <th>{t('obligations.category')}</th>
-                                    <th>{t('obligations.frequency')}</th>
+                                    <th>{t('obligations.obligation')}</th>
                                     <th>{t('obligations.riskLevel')}</th>
-                                    <th>Réglementation</th>
+                                    <th>{t('obligations.frequency')}</th>
+                                    <th>{t('obligations.category')}</th>
+                                    <th>{t('obligations.regulation')}</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -117,14 +117,14 @@ export default function ObligationsPage() {
                                             </div>
                                         </td>
                                         <td>
-                                            <span className={`badge ${CATEGORY_COLORS[obligation.category] || 'info'}`}>
-                                                {obligation.category}
+                                            <span className={`badge ${RISK_COLORS[obligation.riskLevel] || 'info'}`}>
+                                                {t(`risk.${obligation.riskLevel}`, obligation.riskLevel)}
                                             </span>
                                         </td>
-                                        <td>{obligation.frequency}</td>
+                                        <td>{t(`frequency.${obligation.frequency}`, obligation.frequency)}</td>
                                         <td>
-                                            <span className={`badge ${RISK_COLORS[obligation.riskLevel] || 'info'}`}>
-                                                {obligation.riskLevel}
+                                            <span className={`badge ${CATEGORY_COLORS[obligation.category] || 'info'}`}>
+                                                {t(`category.${obligation.category}`, obligation.category)}
                                             </span>
                                         </td>
                                         <td>
