@@ -4,7 +4,11 @@ import jwt from '@fastify/jwt';
 import dotenv from 'dotenv';
 import { companyRoutes } from './modules/companies';
 import { userRoutes } from './modules/users';
-import { regulationRoutes } from './modules/obligations';
+import { regulationRoutes, obligationRoutes } from './modules/obligations';
+import { controlRoutes } from './modules/controls';
+import { checkRoutes } from './modules/checks';
+import { evidenceRoutes } from './modules/evidence';
+import { deadlineRoutes } from './modules/deadlines';
 
 // Load environment variables
 dotenv.config();
@@ -97,6 +101,11 @@ const start = async () => {
         await app.register(companyRoutes);
         await app.register(userRoutes);
         await app.register(regulationRoutes);
+        await app.register(obligationRoutes);
+        await app.register(controlRoutes);
+        await app.register(checkRoutes);
+        await app.register(evidenceRoutes);
+        await app.register(deadlineRoutes);
 
         const port = Number(process.env.PORT) || 3000;
         await app.listen({ port, host: '0.0.0.0' });
@@ -106,6 +115,11 @@ const start = async () => {
         console.log(`🏢 Companies: /companies`);
         console.log(`👤 Users: /users`);
         console.log(`📜 Regulations: /regulations`);
+        console.log(`📋 Obligations: /obligations`);
+        console.log(`🔧 Controls: /controls`);
+        console.log(`✅ Checks: /checks`);
+        console.log(`📄 Evidence: /evidence`);
+        console.log(`⏰ Deadlines: /deadlines`);
     } catch (err) {
         app.log.error(err);
         process.exit(1);
