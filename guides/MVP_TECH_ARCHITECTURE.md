@@ -103,6 +103,7 @@
 ## 3.1. Internationalization & RTL Support
 
 > [!IMPORTANT]
+
 > **Language Strategy for Tunisian Market**:
 > - **Primary**: French (default UI language)
 > - **Secondary**: Arabic (RTL support for content display)
