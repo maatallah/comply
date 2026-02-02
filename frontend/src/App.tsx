@@ -6,6 +6,7 @@ import DashboardPage from './pages/DashboardPage';
 import ObligationsPage from './pages/ObligationsPage';
 import ControlsPage from './pages/ControlsPage';
 import DeadlinesPage from './pages/DeadlinesPage';
+import RegulationsPage from './pages/RegulationsPage';
 import './i18n';
 import './index.css';
 
@@ -59,6 +60,7 @@ function AppRoutes() {
         <Route path="obligations" element={<ObligationsPage />} />
         <Route path="controls" element={<ControlsPage />} />
         <Route path="deadlines" element={<DeadlinesPage />} />
+        <Route path="regulations" element={<RegulationsPage />} />
       </Route>
 
       {/* Catch all - redirect to dashboard */}

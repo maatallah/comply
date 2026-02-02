@@ -19,6 +19,14 @@ declare module 'fastify' {
     }
 }
 
+// Helper: Calculate seconds until next midnight
+function getSecondsUntilMidnight(): number {
+    const now = new Date();
+    const midnight = new Date(now);
+    midnight.setHours(24, 0, 0, 0); // Next midnight
+    return Math.floor((midnight.getTime() - now.getTime()) / 1000);
+}
+
 // ==================== ROUTES ====================
 
 export async function userRoutes(app: FastifyInstance) {
@@ -49,8 +57,8 @@ export async function userRoutes(app: FastifyInstance) {
                 role: user.role,
             };
 
-            const accessToken = app.jwt.sign(payload, { expiresIn: process.env.JWT_ACCESS_EXPIRY || '15m' });
-            const refreshToken = app.jwt.sign(payload, { expiresIn: process.env.JWT_REFRESH_EXPIRY || '7d' });
+            const accessToken = app.jwt.sign(payload, { expiresIn: process.env.JWT_ACCESS_EXPIRY || '1h' });
+            const refreshToken = app.jwt.sign(payload, { expiresIn: getSecondsUntilMidnight() });
 
             return reply.status(201).send({
                 success: true,
@@ -114,8 +122,8 @@ export async function userRoutes(app: FastifyInstance) {
                 role: user.role,
             };
 
-            const accessToken = app.jwt.sign(payload, { expiresIn: process.env.JWT_ACCESS_EXPIRY || '15m' });
-            const refreshToken = app.jwt.sign(payload, { expiresIn: process.env.JWT_REFRESH_EXPIRY || '7d' });
+            const accessToken = app.jwt.sign(payload, { expiresIn: process.env.JWT_ACCESS_EXPIRY || '1h' });
+            const refreshToken = app.jwt.sign(payload, { expiresIn: getSecondsUntilMidnight() });
 
             return reply.send({
                 success: true,
@@ -149,7 +157,43 @@ export async function userRoutes(app: FastifyInstance) {
         }
     });
 
-    // ========== GET CURRENT USER (Protected) ==========
+    // ========== REFRESH TOKEN ==========
+    // POST /auth/refresh
+    app.post('/auth/refresh', async (request: FastifyRequest, reply: FastifyReply) => {
+        try {
+            const { refreshToken } = request.body as { refreshToken: string };
+
+            if (!refreshToken) {
+                return reply.status(400).send({
+                    success: false,
+                    error: { code: 'MISSING_TOKEN', message: 'Token de rafraîchissement manquant' },
+                });
+            }
+
+            // Verify the refresh token
+            const decoded = app.jwt.verify(refreshToken) as JwtPayload;
+
+            // Generate new access token
+            const payload: JwtPayload = {
+                userId: decoded.userId,
+                companyId: decoded.companyId,
+                email: decoded.email,
+                role: decoded.role,
+            };
+
+            const newAccessToken = app.jwt.sign(payload, { expiresIn: process.env.JWT_ACCESS_EXPIRY || '1h' });
+
+            return reply.send({
+                success: true,
+                data: { accessToken: newAccessToken },
+            });
+        } catch (error: any) {
+            return reply.status(401).send({
+                success: false,
+                error: { code: 'INVALID_REFRESH_TOKEN', message: 'Token de rafraîchissement invalide ou expiré' },
+            });
+        }
+    });
     // GET /auth/me
     app.get('/auth/me', { preHandler: [app.authenticate] }, async (request: FastifyRequest, reply: FastifyReply) => {
         const user = request.user as JwtPayload;

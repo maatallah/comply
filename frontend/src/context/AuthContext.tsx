@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 
 interface User {
     userId: string;
@@ -15,6 +15,7 @@ interface AuthContextType {
     token: string | null;
     login: (email: string, password: string) => Promise<boolean>;
     logout: () => void;
+    refreshAccessToken: () => Promise<boolean>;
     isLoading: boolean;
 }
 
@@ -49,10 +50,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             const data = await response.json();
 
             if (data.success) {
-                const { accessToken, user: userData } = data.data;
+                const { accessToken, refreshToken, user: userData } = data.data;
                 setToken(accessToken);
                 setUser(userData);
                 localStorage.setItem('token', accessToken);
+                localStorage.setItem('refreshToken', refreshToken);
                 localStorage.setItem('user', JSON.stringify(userData));
                 return true;
             }
@@ -63,15 +65,44 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
     };
 
+    const refreshAccessToken = useCallback(async (): Promise<boolean> => {
+        try {
+            const refreshToken = localStorage.getItem('refreshToken');
+            if (!refreshToken) {
+                return false;
+            }
+
+            const response = await fetch(`${API_URL}/auth/refresh`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ refreshToken }),
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                const newAccessToken = data.data.accessToken;
+                setToken(newAccessToken);
+                localStorage.setItem('token', newAccessToken);
+                return true;
+            }
+            return false;
+        } catch (error) {
+            console.error('Token refresh error:', error);
+            return false;
+        }
+    }, []);
+
     const logout = () => {
         setToken(null);
         setUser(null);
         localStorage.removeItem('token');
+        localStorage.removeItem('refreshToken');
         localStorage.removeItem('user');
     };
 
     return (
-        <AuthContext.Provider value={{ user, token, login, logout, isLoading }}>
+        <AuthContext.Provider value={{ user, token, login, logout, refreshAccessToken, isLoading }}>
             {children}
         </AuthContext.Provider>
     );

@@ -5,7 +5,7 @@ import {
     FileText,
     CheckSquare,
     Clock,
-    Settings,
+    BookOpen,
     LogOut,
     Shield
 } from 'lucide-react';
@@ -56,6 +56,10 @@ export default function Layout() {
                     <NavLink to="/deadlines" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
                         <Clock size={20} />
                         {t('nav.deadlines')}
+                    </NavLink>
+                    <NavLink to="/regulations" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
+                        <BookOpen size={20} />
+                        {t('nav.regulations')}
                     </NavLink>
                 </nav>
 
