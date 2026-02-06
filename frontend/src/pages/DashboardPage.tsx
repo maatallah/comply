@@ -1,19 +1,33 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { FileText, Clock, AlertTriangle, CheckCircle, Rss, ChevronRight } from 'lucide-react';
+import { FileText, Clock, AlertTriangle, CheckCircle, Rss, ChevronRight, TrendingUp, Download } from 'lucide-react';
+import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Legend } from 'recharts';
 import { useAuth } from '../context/AuthContext';
 
 const API_URL = 'http://localhost:3000';
 
-interface CategoryStat {
+interface CategoryScore {
     category: string;
-    total: number;
-    highRisk: number;
+    totalControls: number;
+    passedControls: number;
+    failedControls: number;
+    partialControls: number;
+    notCheckedControls: number;
+    compliancePercent: number;
+}
+
+interface ComplianceBreakdown {
+    overallScore: number;
+    totalControls: number;
+    passedControls: number;
+    categories: CategoryScore[];
+    overdueDeadlines: number;
+    upcomingDeadlines: number;
 }
 
 interface Summary {
     totalObligations: number;
-    byCategory: CategoryStat[];
+    byCategory: { category: string; total: number; highRisk: number }[];
 }
 
 interface DeadlineSummary {
@@ -21,15 +35,19 @@ interface DeadlineSummary {
     overdue: number;
 }
 
+const CHART_COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
+
 export default function DashboardPage() {
     const { t } = useTranslation();
     const { user, token } = useAuth();
 
     const [obligationSummary, setObligationSummary] = useState<Summary | null>(null);
     const [deadlineSummary, setDeadlineSummary] = useState<DeadlineSummary | null>(null);
+    const [complianceBreakdown, setComplianceBreakdown] = useState<ComplianceBreakdown | null>(null);
     const [jortEntries, setJortEntries] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [exporting, setExporting] = useState(false);
 
     useEffect(() => {
         let isMounted = true;
@@ -46,10 +64,11 @@ export default function DashboardPage() {
                     'Authorization': `Bearer ${token}`,
                 };
 
-                const [obResult, dlResult, jortResult] = await Promise.all([
+                const [obResult, dlResult, jortResult, scoringResult] = await Promise.all([
                     fetch(`${API_URL}/obligations/summary`, { headers }).then(r => r.json()),
                     fetch(`${API_URL}/deadlines/summary`, { headers }).then(r => r.json()),
                     fetch(`${API_URL}/jort-feed?limit=3&status=PENDING`, { headers }).then(r => r.json()),
+                    fetch(`${API_URL}/scoring/breakdown`, { headers }).then(r => r.json()),
                 ]);
 
                 if (!isMounted) return;
@@ -57,6 +76,7 @@ export default function DashboardPage() {
                 if (obResult.success) setObligationSummary(obResult.data);
                 if (dlResult.success) setDeadlineSummary(dlResult.data);
                 if (jortResult.success) setJortEntries(jortResult.entries);
+                if (scoringResult.success) setComplianceBreakdown(scoringResult.data);
             } catch (err) {
                 console.error('Error fetching dashboard data:', err);
                 if (isMounted) setError('Failed to load dashboard data');
@@ -83,14 +103,62 @@ export default function DashboardPage() {
     const total = obligationSummary?.totalObligations || 0;
     const dueSoon = deadlineSummary?.dueSoon || 0;
     const overdue = deadlineSummary?.overdue || 0;
-    const compliantPct = total > 0 ? Math.round(((total - overdue) / total) * 100) : 100;
+    const overallScore = complianceBreakdown?.overallScore ?? (total > 0 ? Math.round(((total - overdue) / total) * 100) : 100);
+
+    // Data for PieChart
+    const pieData = complianceBreakdown ? [
+        { name: 'Conforme', value: complianceBreakdown.passedControls, color: '#10b981' },
+        { name: 'Non-vérifié', value: complianceBreakdown.totalControls - complianceBreakdown.passedControls - (complianceBreakdown.categories.reduce((acc, c) => acc + c.failedControls + c.partialControls, 0)), color: '#94a3b8' },
+        { name: 'Non-conforme', value: complianceBreakdown.categories.reduce((acc, c) => acc + c.failedControls, 0), color: '#ef4444' },
+        { name: 'Partiel', value: complianceBreakdown.categories.reduce((acc, c) => acc + c.partialControls, 0), color: '#f59e0b' },
+    ].filter(d => d.value > 0) : [];
+
+    // Data for BarChart
+    const barData = complianceBreakdown?.categories.map((cat) => ({
+        name: t(`category.${cat.category}`, cat.category),
+        Conforme: cat.passedControls,
+        'Non-conforme': cat.failedControls,
+        Partiel: cat.partialControls,
+        'Non-vérifié': cat.notCheckedControls,
+    })) || [];
+
+    const handleExportPdf = async () => {
+        setExporting(true);
+        try {
+            const response = await fetch(`${API_URL}/reports/obligations-pdf`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (response.ok) {
+                const blob = await response.blob();
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'rapport-conformite.pdf';
+                a.click();
+                URL.revokeObjectURL(url);
+            }
+        } catch (err) {
+            console.error('Export error:', err);
+        } finally {
+            setExporting(false);
+        }
+    };
 
     return (
         <div>
-            <div className="page-header">
+            <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <h1 className="page-title">
                     {t('dashboard.welcome')}, {user?.firstName || 'User'}! 👋
                 </h1>
+                <button
+                    className="btn btn-secondary"
+                    onClick={handleExportPdf}
+                    disabled={exporting}
+                    style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                >
+                    <Download size={18} />
+                    {exporting ? 'Export...' : 'Exporter PDF'}
+                </button>
             </div>
 
             {/* Stats Cards */}
@@ -128,13 +196,69 @@ export default function DashboardPage() {
                 <div className="stat-card success">
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                         <div>
-                            <div className="stat-value">{compliantPct}%</div>
+                            <div className="stat-value">{overallScore}%</div>
                             <div className="stat-label">{t('dashboard.compliant')}</div>
                         </div>
                         <CheckCircle size={40} style={{ opacity: 0.3 }} />
                     </div>
                 </div>
             </div>
+
+            {/* Compliance Charts Section */}
+            {complianceBreakdown && complianceBreakdown.totalControls > 0 && (
+                <div className="card" style={{ marginTop: '2rem' }}>
+                    <h2 className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <TrendingUp size={20} className="text-primary" />
+                        Tableau de Conformité par Catégorie
+                    </h2>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '2rem', marginTop: '1.5rem' }}>
+                        {/* Pie Chart */}
+                        <div style={{ textAlign: 'center' }}>
+                            <ResponsiveContainer width="100%" height={220}>
+                                <PieChart>
+                                    <Pie
+                                        data={pieData}
+                                        cx="50%"
+                                        cy="50%"
+                                        innerRadius={50}
+                                        outerRadius={80}
+                                        paddingAngle={3}
+                                        dataKey="value"
+                                        label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                                        labelLine={false}
+                                    >
+                                        {pieData.map((entry, index) => (
+                                            <Cell key={`cell-${index}`} fill={entry.color} />
+                                        ))}
+                                    </Pie>
+                                    <Tooltip />
+                                </PieChart>
+                            </ResponsiveContainer>
+                            <div style={{ fontSize: '2rem', fontWeight: 700, color: overallScore >= 70 ? 'var(--success)' : overallScore >= 40 ? 'var(--warning)' : 'var(--danger)' }}>
+                                {overallScore}%
+                            </div>
+                            <div style={{ fontSize: '0.875rem', color: 'var(--gray-500)' }}>Score de Conformité Global</div>
+                        </div>
+
+                        {/* Bar Chart */}
+                        <div>
+                            <ResponsiveContainer width="100%" height={250}>
+                                <BarChart data={barData} layout="vertical" margin={{ left: 80 }}>
+                                    <XAxis type="number" />
+                                    <YAxis type="category" dataKey="name" width={80} tick={{ fontSize: 12 }} />
+                                    <Tooltip />
+                                    <Legend />
+                                    <Bar dataKey="Conforme" stackId="a" fill="#10b981" />
+                                    <Bar dataKey="Partiel" stackId="a" fill="#f59e0b" />
+                                    <Bar dataKey="Non-conforme" stackId="a" fill="#ef4444" />
+                                    <Bar dataKey="Non-vérifié" stackId="a" fill="#94a3b8" />
+                                </BarChart>
+                            </ResponsiveContainer>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* JORT Feed Section */}
             <div className="card" style={{ marginTop: '2rem' }}>
@@ -169,7 +293,7 @@ export default function DashboardPage() {
                 )}
             </div>
 
-            {/* Category Breakdown */}
+            {/* Category Breakdown (Legacy) */}
             {obligationSummary?.byCategory && obligationSummary.byCategory.length > 0 && (
                 <div className="card">
                     <h2 className="card-title">{t('dashboard.byCategory')}</h2>

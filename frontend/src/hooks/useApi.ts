@@ -202,5 +202,8 @@ export function useApi() {
             }),
         deleteArticle: (id: string) =>
             fetchWithAuth(`/articles/${id}`, { method: 'DELETE' }),
+
+        // ============ SCORING ============
+        getComplianceBreakdown: () => fetchWithAuth('/scoring/breakdown'),
     };
 }

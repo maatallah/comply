@@ -15,6 +15,8 @@ import { evidenceRoutes } from './modules/evidence';
 import { deadlineRoutes } from './modules/deadlines';
 import { alertRoutes } from './modules/alerts';
 import { jortRoutes } from './modules/jort/jort.routes';
+import { scoringRoutes } from './modules/scoring';
+import { reportsRoutes } from './modules/reports';
 
 // Load environment variables
 dotenv.config();
@@ -139,6 +141,8 @@ const start = async () => {
         await app.register(deadlineRoutes);
         await app.register(alertRoutes, { prefix: '/alerts' });
         await app.register(jortRoutes, { prefix: '/jort-feed' });
+        await app.register(scoringRoutes, { prefix: '/scoring' });
+        await app.register(reportsRoutes, { prefix: '/reports' });
 
         const port = Number(process.env.PORT) || 3000;
         await app.listen({ port, host: '0.0.0.0' });

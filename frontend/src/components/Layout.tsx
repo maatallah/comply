@@ -13,7 +13,9 @@ import {
     Building,
     ClipboardCheck,
     ClipboardList,
-    Rss
+    Rss,
+    Sun,
+    Moon
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useApi } from '../hooks/useApi';
@@ -25,6 +27,9 @@ export default function Layout() {
     const api = useApi();
 
     const [unreadCount, setUnreadCount] = useState(0);
+    const [theme, setTheme] = useState(() => {
+        return localStorage.getItem('theme') || 'auto';
+    });
 
     const fetchCount = async () => {
         if (!token) return;
@@ -59,6 +64,19 @@ export default function Layout() {
         i18n.changeLanguage(lang);
         document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
     };
+
+    const toggleTheme = () => {
+        const newTheme = theme === 'dark' ? 'light' : 'dark';
+        setTheme(newTheme);
+        localStorage.setItem('theme', newTheme);
+        document.documentElement.setAttribute('data-theme', newTheme);
+    };
+
+    useEffect(() => {
+        if (theme !== 'auto') {
+            document.documentElement.setAttribute('data-theme', theme);
+        }
+    }, [theme]);
 
     const getInitials = () => {
         if (!user) return '?';
@@ -149,6 +167,16 @@ export default function Layout() {
                             ع
                         </button>
                     </div>
+
+                    <button
+                        className="nav-link"
+                        onClick={toggleTheme}
+                        style={{ width: '100%', marginBottom: '0.75rem', justifyContent: 'center' }}
+                        title={theme === 'dark' ? 'Passer au mode clair' : 'Passer au mode sombre'}
+                    >
+                        {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+                        {theme === 'dark' ? 'Mode Clair' : 'Mode Sombre'}
+                    </button>
 
                     <button className="nav-link" onClick={handleLogout} style={{ width: '100%' }}>
                         <LogOut size={20} />
