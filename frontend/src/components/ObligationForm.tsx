@@ -137,8 +137,17 @@ export default function ObligationForm({ obligation, onSave, onCancel }: Obligat
                 };
                 result = await api.updateObligation(obligation.id, updateData);
             } else {
-                // For create, send all fields
-                result = await api.createObligation(formData);
+                // For create, clean up empty values before sending
+                const createData: Record<string, unknown> = {
+                    regulationId: formData.regulationId,
+                    titleFr: formData.titleFr,
+                    frequency: formData.frequency,
+                    riskLevel: formData.riskLevel,
+                };
+                if (formData.titleAr) createData.titleAr = formData.titleAr;
+                if (formData.articleId) createData.articleId = formData.articleId;
+
+                result = await api.createObligation(createData);
             }
 
             if (result.success) {

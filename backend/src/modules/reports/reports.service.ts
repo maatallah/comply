@@ -33,75 +33,113 @@ export class ReportsService {
                 const compliance = await scoringService.getComplianceBreakdown(companyId);
 
                 // Create PDF
-                const doc = new PDFDocument({ margin: 50 });
+                const doc = new PDFDocument({ margin: 50, size: 'A4' });
                 const chunks: Buffer[] = [];
 
                 doc.on('data', (chunk: Buffer) => chunks.push(chunk));
                 doc.on('end', () => resolve(Buffer.concat(chunks)));
                 doc.on('error', reject);
 
-                // Header
-                doc.fontSize(20).fillColor('#1e3a8a').text('Rapport de Conformité', { align: 'center' });
-                doc.moveDown(0.5);
-                doc.fontSize(14).fillColor('#475569').text(company?.legalName || 'N/A', { align: 'center' });
+                // ==================== HEADER ====================
+                doc.fontSize(22).fillColor('#1e3a8a').text('Rapport de Conformité', { align: 'center' });
                 doc.moveDown(0.3);
+                doc.fontSize(14).fillColor('#475569').text(company?.legalName || 'N/A', { align: 'center' });
+                doc.moveDown(0.2);
                 doc.fontSize(10).fillColor('#94a3b8').text(`Généré le ${new Date().toLocaleDateString('fr-TN')}`, { align: 'center' });
-                doc.moveDown(1.5);
+                doc.moveDown(1);
 
-                // Compliance Score Summary
-                doc.fontSize(16).fillColor('#1e3a8a').text('Résumé de Conformité');
+                // ==================== SCORE SUMMARY ====================
+                doc.fontSize(14).fillColor('#1e3a8a').text('Résumé de Conformité', { underline: true });
                 doc.moveDown(0.5);
 
-                // Score box
-                doc.rect(50, doc.y, 500, 60).fill('#f0fdf4');
-                doc.fillColor('#166534').fontSize(28).text(`${compliance.overallScore}%`, 60, doc.y - 50, { width: 100 });
-                doc.fontSize(12).fillColor('#475569').text('Score Global', 60, doc.y - 20);
-                doc.fontSize(12).fillColor('#475569').text(`${compliance.passedControls} / ${compliance.totalControls} contrôles conformes`, 180, doc.y - 50);
-                doc.text(`${compliance.overdueDeadlines} échéances en retard`, 180, doc.y - 20);
-                doc.text(`${compliance.upcomingDeadlines} échéances à venir (30j)`, 350, doc.y - 20);
-
-                doc.moveDown(3);
-
-                // Category Breakdown
-                doc.fontSize(16).fillColor('#1e3a8a').text('Conformité par Catégorie');
+                // Score info in a simple format
+                const scoreColor = compliance.overallScore >= 70 ? '#166534' : compliance.overallScore >= 40 ? '#ca8a04' : '#dc2626';
+                doc.fontSize(36).fillColor(scoreColor).text(`${compliance.overallScore}%`, { continued: false });
+                doc.fontSize(11).fillColor('#475569').text('Score de Conformité Global');
                 doc.moveDown(0.5);
 
-                for (const cat of compliance.categories) {
-                    const categoryLabel = cat.category.replace(/_/g, ' ');
-                    doc.fontSize(11).fillColor('#1f2937').text(`• ${categoryLabel}: ${cat.compliancePercent}% (${cat.passedControls}/${cat.totalControls})`);
+                doc.fontSize(10).fillColor('#374151');
+                doc.text(`- Contrôles conformes: ${compliance.passedControls} / ${compliance.totalControls}`);
+                doc.text(`- Échéances en retard: ${compliance.overdueDeadlines}`);
+                doc.text(`- Échéances à venir (30j): ${compliance.upcomingDeadlines}`);
+                doc.moveDown(1);
+
+                // ==================== CATEGORY BREAKDOWN ====================
+                if (compliance.categories.length > 0) {
+                    doc.fontSize(14).fillColor('#1e3a8a').text('Conformité par Catégorie', { underline: true });
+                    doc.moveDown(0.5);
+
+                    doc.fontSize(10).fillColor('#374151');
+                    for (const cat of compliance.categories) {
+                        const catLabel = cat.category.replace(/_/g, ' ');
+                        const pct = cat.compliancePercent;
+                        const pctColor = pct >= 70 ? '#166534' : pct >= 40 ? '#ca8a04' : '#dc2626';
+                        doc.fillColor(pctColor).text(`${pct}%`, { continued: true });
+                        doc.fillColor('#374151').text(` - ${catLabel} (${cat.passedControls}/${cat.totalControls} contrôles)`);
+                    }
+                    doc.moveDown(1);
                 }
 
-                doc.moveDown(1.5);
+                // ==================== OBLIGATIONS LIST ====================
+                doc.fontSize(14).fillColor('#1e3a8a').text('Liste des Obligations', { underline: true });
 
-                // Obligations List
-                doc.fontSize(16).fillColor('#1e3a8a').text('Liste des Obligations');
                 doc.moveDown(0.5);
 
-                let currentCategory = '';
-                for (const ob of obligations) {
-                    if (ob.category !== currentCategory) {
-                        currentCategory = ob.category;
-                        doc.moveDown(0.5);
-                        doc.fontSize(13).fillColor('#3b82f6').text(currentCategory.replace(/_/g, ' '));
-                        doc.moveDown(0.3);
-                    }
+                if (obligations.length === 0) {
+                    doc.fontSize(10).fillColor('#6b7280').text('Aucune obligation souscrite pour le moment.');
+                } else {
+                    let currentCategory = '';
 
-                    const riskColor = ob.riskLevel === 'CRITICAL' ? '#ef4444' : ob.riskLevel === 'HIGH' ? '#f97316' : ob.riskLevel === 'MEDIUM' ? '#f59e0b' : '#22c55e';
-                    doc.fontSize(11).fillColor('#1f2937').text(`${ob.titleFr}`);
-                    doc.fontSize(9).fillColor('#6b7280').text(`   Régulation: ${ob.regulation?.code || 'N/A'} | Fréquence: ${ob.frequency} | Risque: `, { continued: true });
-                    doc.fillColor(riskColor).text(ob.riskLevel);
+                    for (const ob of obligations) {
+                        // Category header
+                        if (ob.category !== currentCategory) {
+                            currentCategory = ob.category;
+                            doc.moveDown(0.3);
+                            doc.fontSize(11).fillColor('#3b82f6').text(`> ${currentCategory.replace(/_/g, ' ')}`);
+                            doc.moveDown(0.3);
+                        }
 
-                    // Controls status
-                    if (ob.controls.length > 0) {
-                        for (const ctrl of ob.controls) {
-                            const lastCheck = ctrl.checks[0];
-                            const statusIcon = lastCheck ? (lastCheck.status === 'PASS' ? '✓' : lastCheck.status === 'FAIL' ? '✗' : '◐') : '○';
-                            const statusColor = lastCheck ? (lastCheck.status === 'PASS' ? '#22c55e' : lastCheck.status === 'FAIL' ? '#ef4444' : '#f59e0b') : '#94a3b8';
-                            doc.fontSize(9).fillColor(statusColor).text(`      ${statusIcon} ${ctrl.titleFr}`);
+                        // Obligation title
+                        doc.fontSize(10).fillColor('#1f2937').text(`- ${ob.titleFr}`);
+
+                        // Obligation details
+                        const riskColors: Record<string, string> = {
+                            'CRITICAL': '#dc2626',
+                            'HIGH': '#ea580c',
+                            'MEDIUM': '#ca8a04',
+                            'LOW': '#16a34a'
+                        };
+                        doc.fontSize(8).fillColor('#6b7280')
+                            .text(`    Régulation: ${ob.regulation?.code || 'N/A'} | Fréquence: ${ob.frequency} | Risque: `, { continued: true });
+                        doc.fillColor(riskColors[ob.riskLevel] || '#6b7280').text(ob.riskLevel);
+
+                        // Controls
+                        if (ob.controls.length > 0) {
+                            for (const ctrl of ob.controls) {
+                                const lastCheck = ctrl.checks[0];
+                                let statusIcon = '[ ]';
+                                let statusColor = '#94a3b8';
+
+                                if (lastCheck) {
+                                    if (lastCheck.status === 'PASS') {
+                                        statusIcon = '[OK]';
+                                        statusColor = '#16a34a';
+                                    } else if (lastCheck.status === 'FAIL') {
+                                        statusIcon = '[X]';
+                                        statusColor = '#dc2626';
+                                    } else {
+                                        statusIcon = '[~]';
+                                        statusColor = '#ca8a04';
+                                    }
+                                }
+                                doc.fontSize(8).fillColor(statusColor).text(`      ${statusIcon} ${ctrl.titleFr}`);
+                            }
                         }
                     }
-                    doc.moveDown(0.3);
                 }
+
+                doc.moveDown(2);
+                doc.fontSize(8).fillColor('#94a3b8').text('— Généré par TuniCompliance —', { align: 'center' });
 
                 doc.end();
             } catch (err) {

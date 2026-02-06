@@ -29,6 +29,7 @@ model Company {
   email          String?
   website        String?
   isActive       Boolean  @default(true) @map("is_active")
+  regime         String   @default("ONSHORE") // ONSHORE or OFFSHORE
   createdAt      DateTime @default(now()) @map("created_at")
   updatedAt      DateTime @updatedAt @map("updated_at")
 
