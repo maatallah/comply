@@ -31,8 +31,10 @@ export default function ChecksPage() {
         if (status && status !== 'all') params.status = status;
 
         const result = await api.getChecks(params);
-        if (result.success) {
+        if (result.success && result.data?.checks) {
             setChecks(result.data.checks);
+        } else {
+            setChecks([]);
         }
         setLoading(false);
     };

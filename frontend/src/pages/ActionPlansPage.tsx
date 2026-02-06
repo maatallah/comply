@@ -27,10 +27,11 @@ export default function ActionPlansPage() {
 
     const fetchActionPlans = async () => {
         setLoading(true);
-        // Fetch checks where hasActionPlan is true
         const result = await api.getChecks({ hasActionPlan: 'true' });
-        if (result.success) {
+        if (result.success && result.data?.checks) {
             setPlans(result.data.checks);
+        } else {
+            setPlans([]);
         }
         setLoading(false);
     };
