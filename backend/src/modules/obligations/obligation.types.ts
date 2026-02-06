@@ -38,6 +38,7 @@ export const CreateObligationSchema = z.object({
     descriptionAr: z.string().optional(),
     frequency: z.enum(['CONTINUOUS', 'MONTHLY', 'QUARTERLY', 'ANNUAL', 'BIENNIAL', 'TRIENNIAL']),
     riskLevel: z.enum(['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']).default('MEDIUM'),
+    articleId: z.string().uuid('ID d\'article invalide').optional(),
     // First deadline date (optional, will calculate from frequency)
     firstDeadline: z.string().datetime().optional(),
 });
@@ -50,6 +51,7 @@ export const UpdateObligationSchema = z.object({
     descriptionAr: z.string().optional(),
     frequency: z.enum(['CONTINUOUS', 'MONTHLY', 'QUARTERLY', 'ANNUAL', 'BIENNIAL', 'TRIENNIAL']).optional(),
     riskLevel: z.enum(['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']).optional(),
+    articleId: z.string().uuid().optional(),
     isActive: z.boolean().optional(),
 });
 
@@ -59,7 +61,7 @@ export const ListObligationsQuerySchema = z.object({
     limit: z.coerce.number().int().min(1).max(100).default(20),
     category: z.enum(['HSE', 'FISCAL', 'SOCIAL', 'ENVIRONMENTAL', 'BRAND_AUDIT', 'QUALITY']).optional(),
     riskLevel: z.enum(['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']).optional(),
-    isActive: z.coerce.boolean().optional(),
+    isActive: z.coerce.boolean().default(true),
 });
 
 // ==================== TYPES ====================

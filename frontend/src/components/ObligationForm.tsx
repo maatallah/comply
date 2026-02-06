@@ -10,6 +10,11 @@ interface Regulation {
     category: string;
 }
 
+interface Article {
+    id: string;
+    number: string;
+}
+
 interface ObligationFormProps {
     obligation?: {
         id: string;
@@ -40,12 +45,14 @@ export default function ObligationForm({ obligation, onSave, onCancel }: Obligat
     const api = useApi();
 
     const [availableRegulations, setAvailableRegulations] = useState<Regulation[]>([]);
+    const [availableArticles, setAvailableArticles] = useState<Article[]>([]);
     const [loading, setLoading] = useState(false);
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
     const [formData, setFormData] = useState({
         regulationId: obligation?.regulationId || '',
+        articleId: (obligation as any)?.articleId || '',
         titleFr: obligation?.titleFr || '',
         titleAr: obligation?.titleAr || '',
         frequency: obligation?.frequency || 'ANNUAL',
@@ -80,6 +87,21 @@ export default function ObligationForm({ obligation, onSave, onCancel }: Obligat
         loadData();
     }, [obligation]);
 
+    // Load articles when regulation changes
+    useEffect(() => {
+        const loadArticles = async () => {
+            if (formData.regulationId) {
+                const result = await (api as any).getArticles(formData.regulationId);
+                if (result.success) {
+                    setAvailableArticles(result.data);
+                }
+            } else {
+                setAvailableArticles([]);
+            }
+        };
+        loadArticles();
+    }, [formData.regulationId]);
+
     const validate = (): boolean => {
         const newErrors: Record<string, string> = {};
 
@@ -111,6 +133,7 @@ export default function ObligationForm({ obligation, onSave, onCancel }: Obligat
                     titleAr: formData.titleAr || undefined,
                     frequency: formData.frequency,
                     riskLevel: formData.riskLevel,
+                    articleId: formData.articleId || undefined,
                 };
                 result = await api.updateObligation(obligation.id, updateData);
             } else {
@@ -168,6 +191,26 @@ export default function ObligationForm({ obligation, onSave, onCancel }: Obligat
                 </select>
                 {errors.regulationId && <div className="form-error">{errors.regulationId}</div>}
             </div>
+
+            {/* Article Select (Optional) */}
+            {formData.regulationId && (
+                <div className="form-group">
+                    <label className="form-label">Article Spécifique (Optionnel)</label>
+                    <select
+                        className="form-select"
+                        value={formData.articleId}
+                        onChange={(e) => handleChange('articleId', e.target.value)}
+                    >
+                        <option value="">Texte complet / Tous les articles</option>
+                        {availableArticles.map((art) => (
+                            <option key={art.id} value={art.id}>
+                                {art.number}
+                            </option>
+                        ))}
+                    </select>
+                    <div className="form-help">Reliez cet engagement à un article précis pour une meilleure traçabilité.</div>
+                </div>
+            )}
 
             {/* Title FR */}
             <div className="form-group">

@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Plus, Pencil, Trash2 } from 'lucide-react';
+import { Plus, Pencil, Trash2, ClipboardCheck } from 'lucide-react';
 import { useApi } from '../hooks/useApi';
 import Modal from '../components/Modal';
 import ControlForm from '../components/ControlForm';
+import CheckForm from '../components/CheckForm';
 
 interface Control {
     id: string;
@@ -15,6 +16,10 @@ interface Control {
     obligation?: {
         titleFr: string;
     };
+    checks?: {
+        status: string;
+        checkDate: string;
+    }[];
 }
 
 export default function ControlsPage() {
@@ -28,6 +33,7 @@ export default function ControlsPage() {
     const [showModal, setShowModal] = useState(false);
     const [editingControl, setEditingControl] = useState<Control | null>(null);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
+    const [showCheckModal, setShowCheckModal] = useState<string | null>(null);
 
     const fetchControls = async () => {
         setLoading(true);
@@ -94,6 +100,7 @@ export default function ControlsPage() {
                                 <tr>
                                     <th>{t('controls.control')}</th>
                                     <th>{t('obligations.obligation')}</th>
+                                    <th>{t('common.status')}</th>
                                     <th>{t('controls.type')}</th>
                                     <th>{t('obligations.frequency')}</th>
                                     <th>{t('common.actions')}</th>
@@ -107,13 +114,20 @@ export default function ControlsPage() {
                                         </td>
                                         <td>{ctrl.obligation?.titleFr || '-'}</td>
                                         <td>
-                                            <span className="badge info">
-                                                {t(`controlType.${ctrl.controlType}`)}
-                                            </span>
+                                            {ctrl.checks && ctrl.checks.length > 0 ? (
+                                                <span className={`badge ${ctrl.checks[0].status === 'PASS' ? 'success' : ctrl.checks[0].status === 'FAIL' ? 'danger' : 'warning'}`}>
+                                                    {t(`checkStatus.${ctrl.checks[0].status}`)}
+                                                </span>
+                                            ) : (
+                                                <span className="badge secondary" style={{ opacity: 0.5 }}>{t('checkStatus.PENDING')}</span>
+                                            )}
                                         </td>
                                         <td>{t(`frequency.${ctrl.frequency}`)}</td>
                                         <td>
                                             <div className="table-actions">
+                                                <button className="btn-icon text-primary" onClick={() => setShowCheckModal(ctrl.id)} title={t('checks.performCheck') || 'Vérifier'}>
+                                                    <ClipboardCheck size={18} />
+                                                </button>
                                                 <button className="btn-icon" onClick={() => handleEdit(ctrl)} title={t('common.edit')}>
                                                     <Pencil size={16} />
                                                 </button>
@@ -158,6 +172,24 @@ export default function ControlsPage() {
                         {t('common.delete')}
                     </button>
                 </div>
+            </Modal>
+
+            {/* Perform Check Modal */}
+            <Modal
+                isOpen={!!showCheckModal}
+                onClose={() => setShowCheckModal(null)}
+                title={t('checks.performCheck') || 'Enregistrer une vérification'}
+            >
+                {showCheckModal && (
+                    <CheckForm
+                        controlId={showCheckModal}
+                        onSave={() => {
+                            setShowCheckModal(null);
+                            fetchControls();
+                        }}
+                        onCancel={() => setShowCheckModal(null)}
+                    />
+                )}
             </Modal>
         </div>
     );

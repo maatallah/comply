@@ -2,13 +2,19 @@ import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import jwt from '@fastify/jwt';
 import dotenv from 'dotenv';
+import multipart from '@fastify/multipart';
+import fastifyStatic from '@fastify/static';
+import path from 'path';
+import fs from 'fs';
 import { companyRoutes } from './modules/companies';
 import { userRoutes } from './modules/users';
-import { regulationRoutes, obligationRoutes } from './modules/obligations';
+import { regulationRoutes, obligationRoutes, articleRoutes } from './modules/obligations';
 import { controlRoutes } from './modules/controls';
 import { checkRoutes } from './modules/checks';
 import { evidenceRoutes } from './modules/evidence';
 import { deadlineRoutes } from './modules/deadlines';
+import { alertRoutes } from './modules/alerts';
+import { jortRoutes } from './modules/jort/jort.routes';
 
 // Load environment variables
 dotenv.config();
@@ -72,8 +78,14 @@ app.get('/', async () => {
 const start = async () => {
     try {
         // Register CORS
+        const allowedOrigins = [
+            'http://localhost:5173',
+            'http://localhost:5174',
+            process.env.FRONTEND_URL
+        ].filter(Boolean) as string[];
+
         await app.register(cors, {
-            origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+            origin: allowedOrigins,
             credentials: true,
             methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
         });
@@ -81,6 +93,23 @@ const start = async () => {
         // Register JWT
         await app.register(jwt, {
             secret: process.env.JWT_SECRET || 'your-super-secret-key-change-in-production',
+        });
+
+        // Register Multipart for file uploads
+        await app.register(multipart, {
+            limits: {
+                fileSize: 10 * 1024 * 1024 // 10MB
+            }
+        });
+
+        // Register Static for serving uploads
+        const uploadsDir = path.join(__dirname, '../uploads');
+        if (!fs.existsSync(uploadsDir)) {
+            fs.mkdirSync(uploadsDir, { recursive: true });
+        }
+        await app.register(fastifyStatic, {
+            root: uploadsDir,
+            prefix: '/uploads/',
         });
 
         // Authentication decorator
@@ -103,10 +132,13 @@ const start = async () => {
         await app.register(userRoutes);
         await app.register(regulationRoutes);
         await app.register(obligationRoutes);
+        await app.register(articleRoutes);
         await app.register(controlRoutes);
         await app.register(checkRoutes);
         await app.register(evidenceRoutes);
         await app.register(deadlineRoutes);
+        await app.register(alertRoutes, { prefix: '/alerts' });
+        await app.register(jortRoutes, { prefix: '/jort-feed' });
 
         const port = Number(process.env.PORT) || 3000;
         await app.listen({ port, host: '0.0.0.0' });
@@ -121,6 +153,7 @@ const start = async () => {
         console.log(`✅ Checks: /checks`);
         console.log(`📄 Evidence: /evidence`);
         console.log(`⏰ Deadlines: /deadlines`);
+        console.log(`🔔 Alerts: /alerts`);
     } catch (err) {
         app.log.error(err);
         process.exit(1);

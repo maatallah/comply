@@ -22,6 +22,7 @@ export class ObligationRepository {
                 category: data.category,
                 frequency: data.frequency,
                 riskLevel: data.riskLevel,
+                articleId: data.articleId,
             },
             include: {
                 regulation: true,
@@ -35,6 +36,7 @@ export class ObligationRepository {
             where: { id },
             include: {
                 regulation: true,
+                article: true,
                 controls: true,
                 deadlines: {
                     orderBy: { dueDate: 'asc' },
@@ -56,7 +58,7 @@ export class ObligationRepository {
 
         if (category) where.category = category;
         if (riskLevel) where.riskLevel = riskLevel;
-        if (isActive !== undefined) where.isActive = isActive;
+        where.isActive = isActive;
 
         const [obligations, total] = await Promise.all([
             prisma.obligation.findMany({
@@ -83,15 +85,19 @@ export class ObligationRepository {
         return { obligations, total };
     }
 
-    // Check if company already has this regulation
-    async existsForCompany(companyId: string, regulationId: string): Promise<boolean> {
-        const existing = await prisma.obligation.findFirst({
-            where: {
-                companyId,
-                regulationId,
-                isActive: true,
-            },
-        });
+    // Check if company already has this specific obligation
+    async existsForCompany(companyId: string, regulationId: string, titleFr?: string): Promise<boolean> {
+        const where: any = {
+            companyId,
+            regulationId,
+            isActive: true,
+        };
+
+        if (titleFr) {
+            where.titleFr = titleFr;
+        }
+
+        const existing = await prisma.obligation.findFirst({ where });
         return !!existing;
     }
 

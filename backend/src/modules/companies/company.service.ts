@@ -1,6 +1,7 @@
 import { companyRepository } from './company.repository';
 import prisma from '../../shared/prisma';
 import type { Company } from '@prisma/client';
+import { obligationService } from '../obligations/obligation.service';
 import type { CreateCompanyInput, UpdateCompanyInput, ListCompaniesQuery } from './company.types';
 
 // ==================== SERVICE ====================
@@ -63,7 +64,18 @@ export class CompanyService {
             }
         }
 
-        return companyRepository.update(id, data);
+        const updated = await companyRepository.update(id, data);
+
+        // Auto-handle Offshore obligations when regime changes
+        if (data.regime && data.regime !== existing.regime) {
+            if (data.regime === 'OFFSHORE') {
+                await obligationService.subscribeToOffshore(id);
+            } else if (data.regime === 'ONSHORE') {
+                await obligationService.unsubscribeFromOffshore(id);
+            }
+        }
+
+        return updated;
     }
 
     // Check if company has linked data (PROTECTION)

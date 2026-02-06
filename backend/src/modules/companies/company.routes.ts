@@ -115,6 +115,7 @@ export async function companyRoutes(app: FastifyInstance) {
             // Validate request body
             const parseResult = UpdateCompanySchema.safeParse(request.body);
             if (!parseResult.success) {
+                console.error('Update Company Validation Error:', JSON.stringify(parseResult.error.format(), null, 2));
                 return reply.status(400).send({
                     success: false,
                     error: {

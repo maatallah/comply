@@ -44,24 +44,25 @@ export function validateTunisiaPhone(phone: string): boolean {
 // Create Company - required fields
 export const CreateCompanySchema = z.object({
     legalName: z.string().min(2, 'Le nom doit avoir au moins 2 caractères'),
-    tradeName: z.string().optional(),
+    tradeName: z.string().nullable().optional(),
     taxId: z.string().refine(validateTaxId, {
         message: 'Matricule fiscal invalide. Format: XXXXXXX/X/A/M/XXX',
     }),
-    cnssId: z.string().refine(validateCnssId, {
+    cnssId: z.string().refine((val) => !val || validateCnssId(val), {
         message: 'Numéro CNSS invalide. Format: 7-10 chiffres',
-    }).optional(),
+    }).nullable().optional().or(z.literal('')),
     activitySector: z.enum(['TEXTILE', 'CONFECTION', 'CONSTRUCTION', 'FOOD', 'CHEMICAL', 'MECHANICAL', 'OTHER']),
     companySize: z.enum(['MICRO', 'SMALL', 'MEDIUM', 'LARGE']),
-    employeeCount: z.number().int().positive().optional(),
-    address: z.string().optional(),
-    city: z.string().optional(),
-    region: z.string().optional(),
-    phone: z.string().refine(validateTunisiaPhone, {
+    employeeCount: z.number().int().positive().nullable().optional(),
+    address: z.string().nullable().optional(),
+    city: z.string().nullable().optional(),
+    region: z.string().nullable().optional(),
+    phone: z.string().refine((val) => !val || validateTunisiaPhone(val), {
         message: 'Numéro de téléphone invalide. Format: +216XXXXXXXX',
-    }).optional().or(z.literal('')),
-    email: z.string().email('Email invalide').optional().or(z.literal('')),
-    website: z.string().url('URL invalide').optional().or(z.literal('')),
+    }).nullable().optional().or(z.literal('')),
+    email: z.string().email('Email invalide').nullable().optional().or(z.literal('')),
+    website: z.string().url('URL invalide').nullable().optional().or(z.literal('')),
+    regime: z.enum(['ONSHORE', 'OFFSHORE']).optional(),
 });
 
 // Update Company - all fields optional

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Plus, Pencil, Trash2, BookOpen } from 'lucide-react';
+import { Plus, Pencil, Trash2, BookOpen, Eye } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useApi } from '../hooks/useApi';
 import { useAuth } from '../context/AuthContext';
 import Modal from '../components/Modal';
@@ -22,6 +23,7 @@ export default function RegulationsPage() {
     const { t, i18n } = useTranslation();
     const api = useApi();
     const { user } = useAuth();
+    const navigate = useNavigate();
 
     const [regulations, setRegulations] = useState<Regulation[]>([]);
     const [loading, setLoading] = useState(true);
@@ -153,6 +155,9 @@ export default function RegulationsPage() {
                                         {isAdmin && (
                                             <td>
                                                 <div className="table-actions">
+                                                    <button className="btn-icon" onClick={() => navigate(`/regulations/${reg.id}`)} title="Voir détails">
+                                                        <Eye size={16} />
+                                                    </button>
                                                     <button className="btn-icon" onClick={() => handleEdit(reg)} title={t('common.edit')}>
                                                         <Pencil size={16} />
                                                     </button>

@@ -85,6 +85,7 @@ model Regulation {
 
   // Relations
   obligations Obligation[]
+  articles    Article[]
 
   @@map("regulations")
 }
@@ -112,6 +113,8 @@ model Obligation {
   regulation Regulation  @relation(fields: [regulationId], references: [id])
   controls   Control[]
   deadlines  Deadline[]
+  articleId  String?     @map("article_id")
+  article    Article?    @relation(fields: [articleId], references: [id])
 
   @@map("obligations")
 }
@@ -136,6 +139,7 @@ model Control {
   // Relations
   obligation Obligation @relation(fields: [obligationId], references: [id], onDelete: Cascade)
   checks     Check[]
+  evidence   Evidence[]
 
   @@map("controls")
 }
@@ -165,17 +169,20 @@ model Check {
 model Evidence {
   id          String   @id @default(uuid())
   companyId   String   @map("company_id")
-  checkId     String   @map("check_id")
+  checkId     String?  @map("check_id")
+  controlId   String?  @map("control_id")
   fileName    String   @map("file_name")
   filePath    String   @map("file_path") // Path in storage
   fileType    String   @map("file_type") // PDF, JPG, PNG, etc.
   fileSize    Int      @map("file_size") // Bytes
   uploadedAt  DateTime @default(now()) @map("uploaded_at")
   description String?  @db.Text
+  metadata    Json?    @map("metadata") // Stores EXIF data (GPS, timestamp, device)
   isValid     Boolean  @default(true) @map("is_valid")
 
   // Relations
-  check Check @relation(fields: [checkId], references: [id], onDelete: Cascade)
+  check   Check?   @relation(fields: [checkId], references: [id], onDelete: Cascade)
+  control Control? @relation(fields: [controlId], references: [id], onDelete: SetNull)
 
   @@map("evidence")
 }
@@ -244,4 +251,37 @@ model Audit {
   company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
 
   @@map("audits")
+}
+
+// ==================== REGULATORY WATCH ====================
+
+model JortEntry {
+  id           String   @id @default(uuid())
+  titleFr      String   @map("title_fr")
+  titleAr      String?  @map("title_ar")
+  ministry     String?  // Ministry or Entity extracted
+  type         String?  // Decree, Law, Order, etc.
+  jortNumber   String?  @map("jort_number")
+  date         DateTime?
+  pdfUrl       String?  @map("pdf_url")
+  status       String   @default("PENDING") // PENDING, RELEVANT, IGNORED
+  processed    Boolean  @default(false)
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  @@map("jort_entries")
+}
+
+model Article {
+  id            String   @id @default(uuid())
+  regulationId  String   @map("regulation_id")
+  number        String   // Art 1, Art 2 bis, etc.
+  contentFr     String?  @map("content_fr") @db.Text
+  contentAr     String?  @map("content_ar") @db.Text
+  
+  // Relations
+  regulation    Regulation @relation(fields: [regulationId], references: [id], onDelete: Cascade)
+  obligations   Obligation[]
+
+  @@map("articles")
 }

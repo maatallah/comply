@@ -11,13 +11,15 @@ export class EvidenceRepository {
         return prisma.evidence.create({
             data: {
                 companyId,
-                checkId: data.checkId,
+                checkId: data.checkId || null,
+                controlId: data.controlId || null,
                 fileName: data.fileName,
                 fileType: data.fileType,
                 filePath: data.filePath,
                 fileSize: data.fileSize,
                 description: data.description,
-            },
+                metadata: (data.metadata || {}) as any,
+            } as any,
             include: {
                 check: {
                     select: { id: true, status: true },

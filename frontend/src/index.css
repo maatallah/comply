@@ -110,10 +110,6 @@ html[dir="rtl"] .main-content {
   color: white;
 }
 
-.nav-link.active {
-  background: var(--sidebar-active);
-  color: white;
-}
 
 button.nav-link {
   background: rgba(255, 255, 255, 0.08);
@@ -416,6 +412,24 @@ tbody tr:hover {
   border-color: var(--primary);
 }
 
+.notification-badge {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background: var(--danger);
+  color: white;
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 2px 5px;
+  border-radius: 10px;
+  min-width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--sidebar-bg);
+}
+
 /* Page Header */
 .page-header {
   display: flex;
@@ -533,6 +547,14 @@ html[dir="rtl"] .form-actions {
 }
 
 /* Form validation */
+.text-success {
+  color: var(--success);
+}
+
+.text-danger {
+  color: var(--danger);
+}
+
 .form-error {
   color: var(--danger);
   font-size: 0.75rem;
@@ -610,4 +632,132 @@ html[dir="rtl"] .form-actions {
   outline: none;
   border-color: var(--primary);
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+/* Alert List Card specifically */
+.alert-card {
+  padding: 1.25rem;
+  margin-bottom: 1rem;
+  border-left: 4px solid var(--gray-300);
+  transition: all 0.2s;
+  cursor: default;
+  position: relative;
+}
+
+.alert-card.unread {
+  background: #f8fbff;
+  /* Even softer blue background */
+  border-left-color: var(--primary);
+  font-weight: 500;
+}
+
+.alert-card.severity-CRITICAL {
+  border-left-color: var(--danger);
+}
+
+.alert-card.severity-HIGH {
+  border-left-color: #f97316;
+}
+
+.alert-card.severity-MEDIUM {
+  border-left-color: var(--warning);
+}
+
+.alert-card.severity-LOW {
+  border-left-color: var(--success);
+}
+
+.alert-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 0.25rem;
+}
+
+.alert-title {
+  font-size: 1.05rem;
+  margin: 0;
+  color: var(--gray-400);
+  /* Faded gray for read alerts */
+  transition: color 0.2s;
+  font-weight: 400;
+}
+
+.alert-card.unread .alert-title {
+  font-weight: 600;
+  color: var(--gray-700);
+  /* Slightly more prominent but still gray */
+}
+
+.alert-time {
+  font-size: 0.75rem;
+  color: var(--gray-500);
+}
+
+.alert-message {
+  color: var(--gray-700);
+  margin-top: 0.5rem;
+  font-size: 0.95rem;
+}
+
+.alert-actions {
+  margin-top: 1rem;
+  display: flex;
+  gap: 0.5rem;
+}
+
+/* New Selection Styles */
+.alert-card-container {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.alert-checkbox {
+  width: 1.25rem;
+  height: 1.25rem;
+  margin-top: 1.5rem;
+  cursor: pointer;
+}
+
+.bulk-toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: white;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+  border-radius: var(--radius);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border: 1px solid var(--primary);
+  animation: slideDown 0.2s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    transform: translateY(-10px);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.btn-danger {
+  background: var(--danger);
+  color: white;
+}
+
+.btn-danger:hover {
+  background: #b91c1c;
+}
+
+.alert-card:hover {
+  transform: translateX(4px);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
 }

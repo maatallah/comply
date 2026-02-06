@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { FileText, Clock, AlertTriangle, CheckCircle } from 'lucide-react';
+import { FileText, Clock, AlertTriangle, CheckCircle, Rss, ChevronRight } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 const API_URL = 'http://localhost:3000';
@@ -27,6 +27,7 @@ export default function DashboardPage() {
 
     const [obligationSummary, setObligationSummary] = useState<Summary | null>(null);
     const [deadlineSummary, setDeadlineSummary] = useState<DeadlineSummary | null>(null);
+    const [jortEntries, setJortEntries] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
@@ -45,18 +46,17 @@ export default function DashboardPage() {
                     'Authorization': `Bearer ${token}`,
                 };
 
-                const [obRes, dlRes] = await Promise.all([
-                    fetch(`${API_URL}/obligations/summary`, { headers }),
-                    fetch(`${API_URL}/deadlines/summary`, { headers }),
+                const [obResult, dlResult, jortResult] = await Promise.all([
+                    fetch(`${API_URL}/obligations/summary`, { headers }).then(r => r.json()),
+                    fetch(`${API_URL}/deadlines/summary`, { headers }).then(r => r.json()),
+                    fetch(`${API_URL}/jort-feed?limit=3&status=PENDING`, { headers }).then(r => r.json()),
                 ]);
 
                 if (!isMounted) return;
 
-                const obResult = await obRes.json();
-                const dlResult = await dlRes.json();
-
                 if (obResult.success) setObligationSummary(obResult.data);
                 if (dlResult.success) setDeadlineSummary(dlResult.data);
+                if (jortResult.success) setJortEntries(jortResult.entries);
             } catch (err) {
                 console.error('Error fetching dashboard data:', err);
                 if (isMounted) setError('Failed to load dashboard data');
@@ -134,6 +134,39 @@ export default function DashboardPage() {
                         <CheckCircle size={40} style={{ opacity: 0.3 }} />
                     </div>
                 </div>
+            </div>
+
+            {/* JORT Feed Section */}
+            <div className="card" style={{ marginTop: '2rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+                    <h2 className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: 0 }}>
+                        <Rss size={20} className="text-primary" />
+                        {t('regulatory.feed') || 'Veille Réglementaire JORT'}
+                    </h2>
+                    <a href="/jort-feed" style={{ fontSize: '0.875rem', color: 'var(--primary-color)', display: 'flex', alignItems: 'center', gap: '0.25rem', fontWeight: 500, textDecoration: 'none' }}>
+                        Voir tout
+                        <ChevronRight size={16} />
+                    </a>
+                </div>
+
+                {jortEntries.length > 0 ? (
+                    <div style={{ display: 'grid', gap: '1rem' }}>
+                        {jortEntries.map((entry) => (
+                            <div key={entry.id} style={{ display: 'flex', gap: '1rem', padding: '1rem', background: 'var(--gray-50)', borderRadius: 'var(--radius)', borderLeft: '3px solid var(--primary-color)' }}>
+                                <div style={{ flex: 1 }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
+                                        <span className="badge info" style={{ fontSize: '0.7rem' }}>{entry.type}</span>
+                                        <span style={{ fontSize: '0.75rem', color: 'var(--gray-500)' }}>{new Date(entry.date).toLocaleDateString()}</span>
+                                    </div>
+                                    <div style={{ fontSize: '0.9rem', fontWeight: 500, lineHeight: '1.4' }}>{entry.titleFr}</div>
+                                    <div style={{ fontSize: '0.75rem', color: 'var(--gray-500)', marginTop: '0.25rem' }}>{entry.ministry}</div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                ) : (
+                    <p style={{ textAlign: 'center', color: 'var(--gray-500)', padding: '1rem' }}>Aucune nouvelle publication détectée.</p>
+                )}
             </div>
 
             {/* Category Breakdown */}

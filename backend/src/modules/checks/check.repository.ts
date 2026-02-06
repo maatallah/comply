@@ -15,7 +15,7 @@ export class CheckRepository {
                 checkDate: data.checkDate ? new Date(data.checkDate) : new Date(),
                 status: data.status,
                 findings: data.findings,
-                correctiveActions: data.recommendations,
+                correctiveActions: data.correctiveActions,
                 performedBy: data.checkedBy || '',
                 nextCheckDue: data.nextCheckDate ? new Date(data.nextCheckDate) : null,
             },
@@ -59,6 +59,12 @@ export class CheckRepository {
             if (toDate) where.checkDate.lte = new Date(toDate);
         }
 
+        if (query.hasActionPlan === true) {
+            where.correctiveActions = { not: null, notIn: [''] };
+        } else if (query.hasActionPlan === false) {
+            where.correctiveActions = { in: [null, ''] };
+        }
+
         const [checks, total] = await Promise.all([
             prisma.check.findMany({
                 where,
@@ -86,6 +92,7 @@ export class CheckRepository {
             where: { id },
             data: {
                 ...data,
+                checkDate: data.checkDate ? new Date(data.checkDate) : undefined,
                 nextCheckDue: data.nextCheckDate ? new Date(data.nextCheckDate) : undefined,
             },
             include: {

@@ -66,6 +66,10 @@ export class ControlRepository {
                     obligation: {
                         select: { id: true, titleFr: true },
                     },
+                    checks: {
+                        orderBy: { checkDate: 'desc' },
+                        take: 1,
+                    },
                 },
             }),
             prisma.control.count({ where }),

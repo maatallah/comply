@@ -8,18 +8,24 @@ import type { CreateEvidenceInput, ListEvidenceQuery } from './evidence.types';
 export class EvidenceService {
 
     // Create evidence
-    async createEvidence(companyId: string, data: CreateEvidenceInput): Promise<Evidence> {
-        // Verify check exists and belongs to company
-        const check = await prisma.check.findUnique({
-            where: { id: data.checkId },
-        });
+    async createEvidence(companyId: string, userId: string, data: CreateEvidenceInput): Promise<Evidence> {
+        // If checkId provided, verify it
+        if (data.checkId) {
+            const check = await prisma.check.findUnique({
+                where: { id: data.checkId },
+            });
 
-        if (!check) {
-            throw new Error('CHECK_NOT_FOUND');
+            if (!check) throw new Error('CHECK_NOT_FOUND');
+            if (check.companyId !== companyId) throw new Error('ACCESS_DENIED');
         }
 
-        if (check.companyId !== companyId) {
-            throw new Error('ACCESS_DENIED');
+        // If controlId provided, verify it
+        if (data.controlId) {
+            const control = await prisma.control.findUnique({
+                where: { id: data.controlId },
+            });
+            if (!control) throw new Error('CONTROL_NOT_FOUND');
+            if (control.companyId !== companyId) throw new Error('ACCESS_DENIED');
         }
 
         return evidenceRepository.create(companyId, data);
@@ -71,8 +77,22 @@ export class EvidenceService {
             throw new Error('ACCESS_DENIED');
         }
 
-        // TODO: Delete actual file from storage (MinIO/S3)
+        // TODO: Delete actual file from storage
         await evidenceRepository.delete(id);
+    }
+
+    // Link unlinked evidence to a check
+    async linkToCheck(companyId: string, controlId: string, checkId: string): Promise<void> {
+        await prisma.evidence.updateMany({
+            where: {
+                companyId,
+                controlId,
+                checkId: null,
+            } as any,
+            data: {
+                checkId,
+            }
+        });
     }
 }
 

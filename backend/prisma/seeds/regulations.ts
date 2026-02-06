@@ -123,6 +123,18 @@ Affichage obligatoire: horaires, règlement intérieur, convention collective.`,
         effectiveDate: new Date('1966-04-30'),
         sourceUrl: 'http://www.emploi.gov.tn/',
     },
+    {
+        id: 'f1e2d3c4-b5a6-4078-9012-34567890abcd',
+        code: 'OFFSHORE-REG',
+        titleFr: 'Régime Totalement Exportateur (Offshore)',
+        titleAr: 'نظام المصدر كلياً (Offshore)',
+        authority: 'DOUANE_FISCALITE',
+        category: 'FISCAL',
+        descriptionFr: 'Réglementations spécifiques aux entreprises sous le régime totalement exportateur (Suspension TVA, Admission Temporaire).',
+        descriptionAr: 'التشريعات الخاصة بالشركات تحت نظام التصدير الكلي (توقيف الأداء، القبول المؤقت).',
+        effectiveDate: new Date('2024-01-01'),
+        sourceUrl: 'https://www.douane.gov.tn/',
+    },
 ];
 
 // ==================== SEED FUNCTION ====================
@@ -131,19 +143,12 @@ export async function seedRegulations() {
     console.log('🌱 Seeding Tier 1 Regulations...');
 
     for (const reg of tier1Regulations) {
-        const existing = await prisma.regulation.findUnique({
+        await prisma.regulation.upsert({
             where: { code: reg.code },
+            update: reg,
+            create: reg,
         });
-
-        if (existing) {
-            console.log(`  ⏭️  Skipping ${reg.code} (already exists)`);
-            continue;
-        }
-
-        await prisma.regulation.create({
-            data: reg,
-        });
-        console.log(`  ✅ Created: ${reg.code} - ${reg.titleFr}`);
+        console.log(`  ✅ Synced: ${reg.code} - ${reg.titleFr}`);
     }
 
     console.log('✨ Regulations seeding complete!');

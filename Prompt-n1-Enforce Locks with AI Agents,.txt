@@ -1,7 +1,7 @@
 You are working on TuniCompliance, a compliance SaaS for Tunisia.
 
 CRITICAL RULES:
-1. These documents are LOCKED (no modifications):
+1. These documents (in root or /guides folder) are LOCKED (no modifications):
    - COMPLIANCE_DOMAIN_REFERENCE.md
    - DATA_MODEL_V2.md
    - MVP_TECH_ARCHITECTURE.md

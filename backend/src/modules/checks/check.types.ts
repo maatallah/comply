@@ -17,15 +17,16 @@ export const CreateCheckSchema = z.object({
     checkDate: z.string().datetime().optional(), // Defaults to now
     status: z.enum(['PENDING', 'PASS', 'FAIL', 'PARTIAL', 'NOT_APPLICABLE']),
     findings: z.string().optional(), // What was found
-    recommendations: z.string().optional(), // What to improve
+    correctiveActions: z.string().optional(), // Steps to fix if FAIL/PARTIAL
     checkedBy: z.string().optional(), // Name of person who checked
     nextCheckDate: z.string().datetime().optional(),
 });
 
 export const UpdateCheckSchema = z.object({
     status: z.enum(['PENDING', 'PASS', 'FAIL', 'PARTIAL', 'NOT_APPLICABLE']).optional(),
+    checkDate: z.string().datetime().optional(),
     findings: z.string().optional(),
-    recommendations: z.string().optional(),
+    correctiveActions: z.string().optional(),
     checkedBy: z.string().optional(),
     nextCheckDate: z.string().datetime().optional(),
 });
@@ -37,6 +38,7 @@ export const ListChecksQuerySchema = z.object({
     status: z.enum(['PENDING', 'PASS', 'FAIL', 'PARTIAL', 'NOT_APPLICABLE']).optional(),
     fromDate: z.string().datetime().optional(),
     toDate: z.string().datetime().optional(),
+    hasActionPlan: z.coerce.boolean().optional(), // Filter checks that have corrective actions
 });
 
 // ==================== TYPES ====================

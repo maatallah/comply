@@ -2,6 +2,7 @@ import { obligationRepository } from './obligation.repository';
 import prisma from '../../shared/prisma';
 import type { Obligation } from '@prisma/client';
 import type { CreateObligationInput, UpdateObligationInput, ListObligationsQuery } from './obligation.types';
+import { OFFSHORE_OBLIGATION_TEMPLATES } from './offshore-templates';
 
 // ==================== SERVICE ====================
 
@@ -18,8 +19,8 @@ export class ObligationService {
             throw new Error('REGULATION_NOT_FOUND');
         }
 
-        // Check if company already subscribed to this regulation
-        const exists = await obligationRepository.existsForCompany(companyId, data.regulationId);
+        // Check if company already subscribed to this specific obligation
+        const exists = await obligationRepository.existsForCompany(companyId, data.regulationId, data.titleFr);
         if (exists) {
             throw new Error('OBLIGATION_ALREADY_EXISTS');
         }
@@ -189,6 +190,47 @@ export class ObligationService {
         }
 
         return created;
+    }
+
+    // Subscribe to Offshore specific obligations
+    async subscribeToOffshore(companyId: string): Promise<Obligation[]> {
+        const created: Obligation[] = [];
+        for (const template of OFFSHORE_OBLIGATION_TEMPLATES) {
+            // Check if already exists (active)
+            const exists = await obligationRepository.existsForCompany(companyId, template.regulationId, template.titleFr);
+            if (exists) continue;
+
+            // Check if exists but inactive (re-activate)
+            const inactive = await prisma.obligation.findFirst({
+                where: {
+                    companyId,
+                    regulationId: template.regulationId,
+                    titleFr: template.titleFr,
+                    isActive: false,
+                }
+            });
+
+            if (inactive) {
+                const reactivated = await obligationRepository.update(inactive.id, { isActive: true });
+                created.push(reactivated);
+            } else {
+                const obligation = await this.createObligation(companyId, template as any);
+                created.push(obligation);
+            }
+        }
+        return created;
+    }
+
+    // Unsubscribe from Offshore (Deactivate)
+    async unsubscribeFromOffshore(companyId: string): Promise<void> {
+        await prisma.obligation.updateMany({
+            where: {
+                companyId,
+                regulationId: 'f1e2d3c4-b5a6-4078-9012-34567890abcd',
+                isActive: true,
+            },
+            data: { isActive: false },
+        });
     }
 }
 

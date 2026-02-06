@@ -1,4 +1,5 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
     LayoutDashboard,
@@ -7,14 +8,47 @@ import {
     Clock,
     BookOpen,
     LogOut,
-    Shield
+    Shield,
+    Bell,
+    Building,
+    ClipboardCheck,
+    ClipboardList,
+    Rss
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useApi } from '../hooks/useApi';
 
 export default function Layout() {
     const { t, i18n } = useTranslation();
-    const { user, logout } = useAuth();
+    const { user, logout, token } = useAuth();
     const navigate = useNavigate();
+    const api = useApi();
+
+    const [unreadCount, setUnreadCount] = useState(0);
+
+    const fetchCount = async () => {
+        if (!token) return;
+        try {
+            const result = await api.getUnreadCount();
+            if (result.success) {
+                setUnreadCount(result.data.count);
+            }
+        } catch (err) {
+            console.warn('Failed to fetch unread count');
+        }
+    };
+
+    useEffect(() => {
+        fetchCount();
+        const interval = setInterval(fetchCount, 60000); // Poll every minute
+
+        window.addEventListener('alertAction', fetchCount);
+        return () => {
+            clearInterval(interval);
+            window.removeEventListener('alertAction', fetchCount);
+        };
+    }, [token]);
+
 
     const handleLogout = () => {
         logout();
@@ -57,9 +91,34 @@ export default function Layout() {
                         <Clock size={20} />
                         {t('nav.deadlines')}
                     </NavLink>
+                    <NavLink to="/checks" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
+                        <ClipboardCheck size={20} />
+                        {t('nav.checks')}
+                    </NavLink>
+                    <NavLink to="/action-plans" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
+                        <ClipboardList size={20} />
+                        {t('nav.actionPlans')}
+                    </NavLink>
+                    <NavLink to="/jort-feed" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
+                        <Rss size={20} />
+                        {t('nav.jortFeed') || 'Veille JORT'}
+                    </NavLink>
                     <NavLink to="/regulations" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
                         <BookOpen size={20} />
                         {t('nav.regulations')}
+                    </NavLink>
+                    <NavLink to="/alerts" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
+                        <div style={{ position: 'relative' }}>
+                            <Bell size={20} />
+                            {unreadCount > 0 && (
+                                <span className="notification-badge">{unreadCount}</span>
+                            )}
+                        </div>
+                        {t('nav.alerts')}
+                    </NavLink>
+                    <NavLink to="/profile" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
+                        <Building size={20} />
+                        {t('nav.profile')}
                     </NavLink>
                 </nav>
 
@@ -70,7 +129,7 @@ export default function Layout() {
                             <div style={{ fontWeight: 500, color: 'white' }}>
                                 {user?.firstName} {user?.lastName}
                             </div>
-                            <div style={{ fontSize: '0.75rem' }}>{user?.role}</div>
+                            <div style={{ fontSize: '0.75rem' }}>{user?.role ? t(`roles.${user.role}`) : ''}</div>
                         </div>
                     </div>
 

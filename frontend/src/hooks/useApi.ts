@@ -10,9 +10,13 @@ export function useApi() {
         const currentToken = localStorage.getItem('token') || token;
 
         const headers: HeadersInit = {
-            'Content-Type': 'application/json',
             ...options.headers,
         };
+
+        // Only set Content-Type if there's a body and it's not already set
+        if (options.body && !(headers as Record<string, string>)['Content-Type']) {
+            (headers as Record<string, string>)['Content-Type'] = 'application/json';
+        }
 
         if (currentToken) {
             (headers as Record<string, string>)['Authorization'] = `Bearer ${currentToken}`;
@@ -85,7 +89,7 @@ export function useApi() {
         deleteObligation: (id: string) =>
             fetchWithAuth(`/obligations/${id}`, { method: 'DELETE' }),
         subscribeToTier1: () =>
-            fetchWithAuth('/obligations/subscribe-tier1', { method: 'POST' }),
+            fetchWithAuth('/obligations/subscribe-tier1', { method: 'POST', body: JSON.stringify({}) }),
 
         // ============ CONTROLS ============
         getControls: (params?: Record<string, string>) => {
@@ -102,6 +106,30 @@ export function useApi() {
                 method: 'PUT',
                 body: JSON.stringify(data),
             }),
+
+        // ============ COMPANIES ============
+        getCompany: (id: string) => fetchWithAuth(`/companies/${id}`),
+        updateCompany: (id: string, data: Record<string, unknown>) =>
+            fetchWithAuth(`/companies/${id}`, {
+                method: 'PUT',
+                body: JSON.stringify(data),
+            }),
+
+        // ============ ALERTS ===========
+        getAlerts: (unreadOnly = false) => fetchWithAuth(`/alerts${unreadOnly ? '?unreadOnly=true' : ''}`),
+        getUnreadCount: () => fetchWithAuth('/alerts/unread-count'),
+        markAlertRead: (id: string) => fetchWithAuth(`/alerts/${id}/read`, { method: 'PUT', body: JSON.stringify({}) }),
+        markAllAlertsRead: () => fetchWithAuth('/alerts/read-all', { method: 'PUT', body: JSON.stringify({}) }),
+        triggerAlertScan: () => fetchWithAuth('/alerts/scan', { method: 'POST', body: JSON.stringify({}) }),
+        generateTestAlerts: () => fetchWithAuth('/alerts/test-generate', { method: 'POST', body: JSON.stringify({}) }),
+        clearAllAlerts: () => fetchWithAuth('/alerts/clear-all', { method: 'DELETE' }),
+        deleteAlert: (id: string) => fetchWithAuth(`/alerts/${id}`, { method: 'DELETE' }),
+        bulkAlertAction: (ids: string[], action: 'read' | 'delete') =>
+            fetchWithAuth('/alerts/bulk', {
+                method: 'POST',
+                body: JSON.stringify({ ids, action })
+            }),
+
         deleteControl: (id: string) =>
             fetchWithAuth(`/controls/${id}`, { method: 'DELETE' }),
 
@@ -110,6 +138,22 @@ export function useApi() {
             const query = params ? `?${new URLSearchParams(params)}` : '';
             return fetchWithAuth(`/checks${query}`);
         },
+        createCheck: (data: any) => fetchWithAuth('/checks', {
+            method: 'POST',
+            body: JSON.stringify(data)
+        }),
+
+        // ============ EVIDENCE ============
+        uploadEvidence: (formData: FormData) => fetchWithAuth('/evidence/upload', {
+            method: 'POST',
+            body: formData,
+            // Headers will be set by fetch naturally for FormData
+        }),
+        getEvidence: (params?: Record<string, string>) => {
+            const query = params ? `?${new URLSearchParams(params)}` : '';
+            return fetchWithAuth(`/evidence${query}`);
+        },
+        deleteEvidence: (id: string) => fetchWithAuth(`/evidence/${id}`, { method: 'DELETE' }),
 
         // ============ DEADLINES ============
         getDeadlines: (params?: Record<string, string>) => {
@@ -130,6 +174,33 @@ export function useApi() {
         deleteDeadline: (id: string) =>
             fetchWithAuth(`/deadlines/${id}`, { method: 'DELETE' }),
         completeDeadline: (id: string) =>
-            fetchWithAuth(`/deadlines/${id}/complete`, { method: 'POST' }),
+            fetchWithAuth(`/deadlines/${id}/complete`, { method: 'POST', body: JSON.stringify({}) }),
+
+        // ============ JORT FEED ============
+        getJortFeed: (params?: Record<string, string>) => {
+            const query = params ? `?${new URLSearchParams(params)}` : '';
+            return fetchWithAuth(`/jort-feed${query}`);
+        },
+        processJortEntry: (id: string, status: 'RELEVANT' | 'IGNORED') =>
+            fetchWithAuth(`/jort-feed/${id}/process`, {
+                method: 'POST',
+                body: JSON.stringify({ status })
+            }),
+
+        // ============ ARTICLES ============
+        getArticles: (regulationId: string) =>
+            fetchWithAuth(`/regulations/${regulationId}/articles`),
+        createArticle: (data: any) =>
+            fetchWithAuth('/articles', {
+                method: 'POST',
+                body: JSON.stringify(data)
+            }),
+        updateArticle: (id: string, data: any) =>
+            fetchWithAuth(`/articles/${id}`, {
+                method: 'PUT',
+                body: JSON.stringify(data)
+            }),
+        deleteArticle: (id: string) =>
+            fetchWithAuth(`/articles/${id}`, { method: 'DELETE' }),
     };
 }
