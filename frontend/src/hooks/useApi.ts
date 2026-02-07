@@ -175,6 +175,8 @@ export function useApi() {
             fetchWithAuth(`/deadlines/${id}`, { method: 'DELETE' }),
         completeDeadline: (id: string) =>
             fetchWithAuth(`/deadlines/${id}/complete`, { method: 'POST', body: JSON.stringify({}) }),
+        revertDeadline: (id: string) =>
+            fetchWithAuth(`/deadlines/${id}/revert`, { method: 'POST', body: JSON.stringify({}) }),
 
         // ============ JORT FEED ============
         getJortFeed: (params?: Record<string, string>) => {

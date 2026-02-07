@@ -122,6 +122,7 @@ export default function ControlsPage() {
                                                 <span className="badge secondary" style={{ opacity: 0.5 }}>{t('checkStatus.PENDING')}</span>
                                             )}
                                         </td>
+                                        <td>{t(`controlType.${ctrl.controlType}`)}</td>
                                         <td>{t(`frequency.${ctrl.frequency}`)}</td>
                                         <td>
                                             <div className="table-actions">

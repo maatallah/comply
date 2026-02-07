@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FileText, Clock, AlertTriangle, CheckCircle, Rss, ChevronRight, TrendingUp, Download } from 'lucide-react';
-import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Legend } from 'recharts';
 import { useAuth } from '../context/AuthContext';
 
 const API_URL = 'http://localhost:3000';
@@ -105,12 +104,12 @@ export default function DashboardPage() {
     const overdue = deadlineSummary?.overdue || 0;
     const overallScore = complianceBreakdown?.overallScore ?? (total > 0 ? Math.round(((total - overdue) / total) * 100) : 100);
 
-    // Data for PieChart
+    // Data for PieChart - with i18n
     const pieData = complianceBreakdown ? [
-        { name: 'Conforme', value: complianceBreakdown.passedControls, color: '#10b981' },
-        { name: 'Non-vérifié', value: complianceBreakdown.totalControls - complianceBreakdown.passedControls - (complianceBreakdown.categories.reduce((acc, c) => acc + c.failedControls + c.partialControls, 0)), color: '#94a3b8' },
-        { name: 'Non-conforme', value: complianceBreakdown.categories.reduce((acc, c) => acc + c.failedControls, 0), color: '#ef4444' },
-        { name: 'Partiel', value: complianceBreakdown.categories.reduce((acc, c) => acc + c.partialControls, 0), color: '#f59e0b' },
+        { name: t('dashboard.conforme'), value: complianceBreakdown.passedControls, color: '#10b981' },
+        { name: t('dashboard.notVerified'), value: complianceBreakdown.totalControls - complianceBreakdown.passedControls - (complianceBreakdown.categories.reduce((acc, c) => acc + c.failedControls + c.partialControls, 0)), color: '#94a3b8' },
+        { name: t('dashboard.nonConforme'), value: complianceBreakdown.categories.reduce((acc, c) => acc + c.failedControls, 0), color: '#ef4444' },
+        { name: t('dashboard.partial'), value: complianceBreakdown.categories.reduce((acc, c) => acc + c.partialControls, 0), color: '#f59e0b' },
     ].filter(d => d.value > 0) : [];
 
     // Data for BarChart
@@ -204,57 +203,146 @@ export default function DashboardPage() {
                 </div>
             </div>
 
-            {/* Compliance Charts Section */}
+            {/* Compliance Charts Section - Professional Infographic Style */}
             {complianceBreakdown && complianceBreakdown.totalControls > 0 && (
-                <div className="card" style={{ marginTop: '2rem' }}>
-                    <h2 className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <TrendingUp size={20} className="text-primary" />
-                        Tableau de Conformité par Catégorie
+                <div className="card compliance-dashboard" style={{ marginTop: '2rem', padding: '2rem' }}>
+                    <h2 className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '2rem' }}>
+                        <TrendingUp size={22} />
+                        {t('dashboard.complianceTitle')}
                     </h2>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '2rem', marginTop: '1.5rem' }}>
-                        {/* Pie Chart */}
-                        <div style={{ textAlign: 'center' }}>
-                            <ResponsiveContainer width="100%" height={220}>
-                                <PieChart>
-                                    <Pie
-                                        data={pieData}
-                                        cx="50%"
-                                        cy="50%"
-                                        innerRadius={50}
-                                        outerRadius={80}
-                                        paddingAngle={3}
-                                        dataKey="value"
-                                        label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                                        labelLine={false}
-                                    >
-                                        {pieData.map((entry, index) => (
-                                            <Cell key={`cell-${index}`} fill={entry.color} />
-                                        ))}
-                                    </Pie>
-                                    <Tooltip />
-                                </PieChart>
-                            </ResponsiveContainer>
-                            <div style={{ fontSize: '2rem', fontWeight: 700, color: overallScore >= 70 ? 'var(--success)' : overallScore >= 40 ? 'var(--warning)' : 'var(--danger)' }}>
-                                {overallScore}%
+                    <div style={{ display: 'grid', gridTemplateColumns: '320px 1fr', gap: '3rem' }}>
+                        {/* Radial Gauge - Main Score */}
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                            <div style={{ position: 'relative', width: '220px', height: '220px' }}>
+                                {/* Background circle */}
+                                <svg viewBox="0 0 100 100" style={{ width: '100%', height: '100%', transform: 'rotate(-90deg)' }}>
+                                    <defs>
+                                        <linearGradient id="scoreGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                                            <stop offset="0%" stopColor={overallScore >= 70 ? '#10b981' : overallScore >= 40 ? '#f59e0b' : '#ef4444'} />
+                                            <stop offset="100%" stopColor={overallScore >= 70 ? '#34d399' : overallScore >= 40 ? '#fbbf24' : '#f87171'} />
+                                        </linearGradient>
+                                    </defs>
+                                    {/* Background track */}
+                                    <circle cx="50" cy="50" r="42" fill="none" stroke="var(--border-color, #e5e7eb)" strokeWidth="8" opacity="0.3" />
+                                    {/* Score arc */}
+                                    <circle
+                                        cx="50" cy="50" r="42"
+                                        fill="none"
+                                        stroke="url(#scoreGradient)"
+                                        strokeWidth="8"
+                                        strokeLinecap="round"
+                                        strokeDasharray={`${overallScore * 2.64} 264`}
+                                        style={{ transition: 'stroke-dasharray 1s ease-out' }}
+                                    />
+                                </svg>
+                                {/* Center content */}
+                                <div style={{
+                                    position: 'absolute',
+                                    top: '50%', left: '50%',
+                                    transform: 'translate(-50%, -50%)',
+                                    textAlign: 'center'
+                                }}>
+                                    <div style={{
+                                        fontSize: '3rem',
+                                        fontWeight: 800,
+                                        lineHeight: 1,
+                                        background: `linear-gradient(135deg, ${overallScore >= 70 ? '#10b981, #34d399' : overallScore >= 40 ? '#f59e0b, #fbbf24' : '#ef4444, #f87171'})`,
+                                        WebkitBackgroundClip: 'text',
+                                        WebkitTextFillColor: 'transparent',
+                                        backgroundClip: 'text'
+                                    }}>
+                                        {overallScore}%
+                                    </div>
+                                    <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary, #64748b)', marginTop: '0.25rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                                        {t('dashboard.conformity')}
+                                    </div>
+                                </div>
                             </div>
-                            <div style={{ fontSize: '0.875rem', color: 'var(--gray-500)' }}>Score de Conformité Global</div>
+
+                            {/* Legend Pills */}
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginTop: '1.5rem', justifyContent: 'center' }}>
+                                {pieData.map((item, i) => (
+                                    <div key={i} style={{
+                                        display: 'flex', alignItems: 'center', gap: '0.4rem',
+                                        padding: '0.35rem 0.75rem',
+                                        background: `${item.color}15`,
+                                        borderRadius: '999px',
+                                        fontSize: '0.75rem',
+                                        fontWeight: 500
+                                    }}>
+                                        <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: item.color }}></span>
+                                        <span style={{ color: 'var(--text-primary)' }}>{item.name}</span>
+                                        <span style={{ color: item.color, fontWeight: 700 }}>{item.value}</span>
+                                    </div>
+                                ))}
+                            </div>
                         </div>
 
-                        {/* Bar Chart */}
+                        {/* Category Breakdown - Modern Bars */}
                         <div>
-                            <ResponsiveContainer width="100%" height={250}>
-                                <BarChart data={barData} layout="vertical" margin={{ left: 80 }}>
-                                    <XAxis type="number" />
-                                    <YAxis type="category" dataKey="name" width={80} tick={{ fontSize: 12 }} />
-                                    <Tooltip />
-                                    <Legend />
-                                    <Bar dataKey="Conforme" stackId="a" fill="#10b981" />
-                                    <Bar dataKey="Partiel" stackId="a" fill="#f59e0b" />
-                                    <Bar dataKey="Non-conforme" stackId="a" fill="#ef4444" />
-                                    <Bar dataKey="Non-vérifié" stackId="a" fill="#94a3b8" />
-                                </BarChart>
-                            </ResponsiveContainer>
+                            <div style={{ fontSize: '0.875rem', fontWeight: 600, marginBottom: '1rem', color: 'var(--text-secondary, #64748b)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                                {t('dashboard.byCategory')}
+                            </div>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                                {complianceBreakdown.categories.map((cat, idx) => {
+                                    const total = cat.totalControls || 1;
+                                    const passPercent = (cat.passedControls / total) * 100;
+                                    const partialPercent = (cat.partialControls / total) * 100;
+                                    const failPercent = (cat.failedControls / total) * 100;
+                                    const uncheckPercent = (cat.notCheckedControls / total) * 100;
+
+                                    return (
+                                        <div key={idx} style={{
+                                            padding: '1rem 1.25rem',
+                                            background: 'var(--bg-card-hover, #f8fafc)',
+                                            borderRadius: '12px',
+                                            border: '1px solid var(--border-light, #e2e8f0)'
+                                        }}>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+                                                <span style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--text-primary)' }}>
+                                                    {t(`category.${cat.category}`, cat.category)}
+                                                </span>
+                                                <span style={{
+                                                    fontSize: '0.8rem',
+                                                    fontWeight: 700,
+                                                    color: cat.compliancePercent >= 70 ? '#10b981' : cat.compliancePercent >= 40 ? '#f59e0b' : '#ef4444'
+                                                }}>
+                                                    {cat.compliancePercent}%
+                                                </span>
+                                            </div>
+                                            {/* Stacked progress bar */}
+                                            <div style={{
+                                                height: '10px',
+                                                borderRadius: '999px',
+                                                overflow: 'hidden',
+                                                display: 'flex',
+                                                background: 'var(--border-color, #e5e7eb)'
+                                            }}>
+                                                {passPercent > 0 && (
+                                                    <div style={{ width: `${passPercent}%`, background: 'linear-gradient(90deg, #10b981, #34d399)', transition: 'width 0.5s' }}></div>
+                                                )}
+                                                {partialPercent > 0 && (
+                                                    <div style={{ width: `${partialPercent}%`, background: 'linear-gradient(90deg, #f59e0b, #fbbf24)', transition: 'width 0.5s' }}></div>
+                                                )}
+                                                {failPercent > 0 && (
+                                                    <div style={{ width: `${failPercent}%`, background: 'linear-gradient(90deg, #ef4444, #f87171)', transition: 'width 0.5s' }}></div>
+                                                )}
+                                                {uncheckPercent > 0 && (
+                                                    <div style={{ width: `${uncheckPercent}%`, background: '#94a3b8', transition: 'width 0.5s' }}></div>
+                                                )}
+                                            </div>
+                                            {/* Mini stats */}
+                                            <div style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem', fontSize: '0.7rem', color: 'var(--text-secondary)' }}>
+                                                <span><span style={{ color: '#10b981', fontWeight: 600 }}>{cat.passedControls}</span> {t('dashboard.ok')}</span>
+                                                <span><span style={{ color: '#f59e0b', fontWeight: 600 }}>{cat.partialControls}</span> {t('dashboard.partial')}</span>
+                                                <span><span style={{ color: '#ef4444', fontWeight: 600 }}>{cat.failedControls}</span> {t('dashboard.fail')}</span>
+                                                <span><span style={{ color: '#94a3b8', fontWeight: 600 }}>{cat.notCheckedControls}</span> {t('dashboard.nv')}</span>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
                         </div>
                     </div>
                 </div>

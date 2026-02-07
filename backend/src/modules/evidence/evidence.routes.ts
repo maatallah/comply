@@ -72,6 +72,7 @@ export async function evidenceRoutes(app: FastifyInstance) {
         // Get non-file fields
         const fields = data.fields as any;
         const checkId = fields.checkId?.value;
+        const controlId = fields.controlId?.value;
         const description = fields.description?.value;
         const metadataString = fields.metadata?.value;
 
@@ -84,18 +85,20 @@ export async function evidenceRoutes(app: FastifyInstance) {
             }
         }
 
-        if (!checkId) {
+        // Require either checkId or controlId
+        if (!checkId && !controlId) {
             if (fs.existsSync(uploadPath)) fs.unlinkSync(uploadPath);
             return reply.status(400).send({
                 success: false,
-                error: { code: 'MISSING_CHECK_ID', message: 'checkId est requis' }
+                error: { code: 'MISSING_ID', message: 'checkId ou controlId est requis' }
             });
         }
 
         try {
             const stats = fs.statSync(uploadPath);
             const evidence = await evidenceService.createEvidence(user.companyId, user.userId, {
-                checkId,
+                checkId: checkId || undefined,
+                controlId: controlId || undefined,
                 fileName: data.filename,
                 fileType: data.mimetype,
                 filePath: `/uploads/${savedFilename}`,
@@ -155,6 +158,42 @@ export async function evidenceRoutes(app: FastifyInstance) {
             await evidenceService.deleteEvidence(id, user.companyId);
 
             return reply.status(204).send();
+        } catch (error: any) {
+            if (error.message === 'EVIDENCE_NOT_FOUND') {
+                return reply.status(404).send({
+                    success: false,
+                    error: { code: 'EVIDENCE_NOT_FOUND', message: 'Preuve introuvable' },
+                });
+            }
+            throw error;
+        }
+    });
+
+    // ========== SERVE FILE (for preview) ==========
+    // GET /evidence/file/:id
+    app.get('/evidence/file/:id', { preHandler: [app.authenticate] }, async (request: any, reply: FastifyReply) => {
+        try {
+            const user = request.user;
+            const { id } = request.params;
+
+            const evidence = await evidenceService.getEvidenceById(id, user.companyId);
+
+            // Build the full file path
+            const filePath = path.join(__dirname, '../..', evidence.filePath);
+
+            if (!fs.existsSync(filePath)) {
+                return reply.status(404).send({
+                    success: false,
+                    error: { code: 'FILE_NOT_FOUND', message: 'Fichier non trouvé' },
+                });
+            }
+
+            // Set appropriate content type
+            reply.header('Content-Type', evidence.fileType || 'application/octet-stream');
+            reply.header('Content-Disposition', `inline; filename="${evidence.fileName}"`);
+
+            const stream = fs.createReadStream(filePath);
+            return reply.send(stream);
         } catch (error: any) {
             if (error.message === 'EVIDENCE_NOT_FOUND') {
                 return reply.status(404).send({

@@ -155,6 +155,36 @@ export async function deadlineRoutes(app: FastifyInstance) {
         }
     });
 
+    // ========== REVERT DEADLINE (UNDO COMPLETION) ==========
+    // POST /deadlines/:id/revert
+    app.post('/deadlines/:id/revert', { preHandler: [app.authenticate] }, async (request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) => {
+        try {
+            const user = request.user;
+            const { id } = request.params;
+
+            const deadline = await deadlineService.revertDeadline(id, user.companyId);
+
+            return reply.send({
+                success: true,
+                data: deadline,
+            });
+        } catch (error: any) {
+            if (error.message === 'DEADLINE_NOT_FOUND') {
+                return reply.status(404).send({
+                    success: false,
+                    error: { code: 'DEADLINE_NOT_FOUND', message: 'Échéance introuvable' },
+                });
+            }
+            if (error.message === 'DEADLINE_NOT_COMPLETED') {
+                return reply.status(400).send({
+                    success: false,
+                    error: { code: 'DEADLINE_NOT_COMPLETED', message: 'Cette échéance n\'est pas encore terminée' },
+                });
+            }
+            throw error;
+        }
+    });
+
     // ========== UPDATE DEADLINE ==========
     // PUT /deadlines/:id
     app.put('/deadlines/:id', { preHandler: [app.authenticate] }, async (request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) => {

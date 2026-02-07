@@ -59,7 +59,7 @@ export class DeadlineService {
         };
     }
 
-    // Mark deadline as completed
+    // Mark deadline as completed (and create next if recurring)
     async completeDeadline(id: string, companyId: string): Promise<Deadline> {
         const deadline = await deadlineRepository.findById(id);
 
@@ -71,9 +71,75 @@ export class DeadlineService {
             throw new Error('ACCESS_DENIED');
         }
 
-        return deadlineRepository.update(id, {
+        // Mark as completed
+        const completed = await deadlineRepository.update(id, {
             status: 'COMPLETED',
             completedAt: new Date().toISOString(),
+        });
+
+        // If recurring, create the next deadline based on the obligation's frequency
+        if (deadline.isRecurring) {
+            const obligation = await prisma.obligation.findUnique({
+                where: { id: deadline.obligationId },
+            });
+
+            if (obligation) {
+                // Calculate next due date based on frequency
+                const currentDueDate = new Date(deadline.dueDate);
+                let nextDueDate = new Date(currentDueDate);
+
+                switch (obligation.frequency) {
+                    case 'MONTHLY':
+                        nextDueDate.setMonth(nextDueDate.getMonth() + 1);
+                        break;
+                    case 'QUARTERLY':
+                        nextDueDate.setMonth(nextDueDate.getMonth() + 3);
+                        break;
+                    case 'ANNUAL':
+                        nextDueDate.setFullYear(nextDueDate.getFullYear() + 1);
+                        break;
+                    case 'BIENNIAL':
+                        nextDueDate.setFullYear(nextDueDate.getFullYear() + 2);
+                        break;
+                    case 'TRIENNIAL':
+                        nextDueDate.setFullYear(nextDueDate.getFullYear() + 3);
+                        break;
+                    default:
+                        // CONTINUOUS or unknown: default to monthly
+                        nextDueDate.setMonth(nextDueDate.getMonth() + 1);
+                }
+
+                // Create next deadline
+                await deadlineRepository.create(companyId, {
+                    obligationId: deadline.obligationId,
+                    dueDate: nextDueDate.toISOString(),
+                    isRecurring: true,
+                });
+            }
+        }
+
+        return completed;
+    }
+
+    // Revert deadline to pending (undo completion)
+    async revertDeadline(id: string, companyId: string): Promise<Deadline> {
+        const deadline = await deadlineRepository.findById(id);
+
+        if (!deadline) {
+            throw new Error('DEADLINE_NOT_FOUND');
+        }
+
+        if (deadline.companyId !== companyId) {
+            throw new Error('ACCESS_DENIED');
+        }
+
+        if (deadline.status !== 'COMPLETED') {
+            throw new Error('DEADLINE_NOT_COMPLETED');
+        }
+
+        return deadlineRepository.update(id, {
+            status: 'PENDING',
+            completedAt: undefined,
         });
     }
 

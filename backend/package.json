@@ -16,6 +16,7 @@
     "db:migrate": "prisma migrate dev",
     "db:migrate:deploy": "prisma migrate deploy",
     "db:seed": "tsx prisma/seeds/index.ts",
+    "db:seed:test": "tsx prisma/seeds/test-data.seed.ts",
     "db:studio": "prisma studio",
     "db:push": "prisma db push",
     "lint": "tsc --noEmit"

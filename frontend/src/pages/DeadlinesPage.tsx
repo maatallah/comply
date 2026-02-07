@@ -28,6 +28,7 @@ export default function DeadlinesPage() {
     const [showModal, setShowModal] = useState(false);
     const [editingDeadline, setEditingDeadline] = useState<Deadline | null>(null);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
+    const [showCompleteConfirm, setShowCompleteConfirm] = useState<Deadline | null>(null);
 
     const fetchDeadlines = async () => {
         setLoading(true);
@@ -60,8 +61,14 @@ export default function DeadlinesPage() {
         }
     };
 
-    const handleComplete = async (id: string) => {
-        await api.completeDeadline(id);
+    const handleComplete = async (dl: Deadline) => {
+        await api.completeDeadline(dl.id);
+        setShowCompleteConfirm(null);
+        fetchDeadlines();
+    };
+
+    const handleRevert = async (id: string) => {
+        await api.revertDeadline(id);
         fetchDeadlines();
     };
 
@@ -148,13 +155,22 @@ export default function DeadlinesPage() {
                                         <td>{dl.isRecurring ? t('deadlines.yes') : t('deadlines.no')}</td>
                                         <td>
                                             <div className="table-actions">
-                                                {dl.status !== 'COMPLETED' && (
+                                                {dl.status !== 'COMPLETED' ? (
                                                     <button
                                                         className="btn btn-success btn-sm"
-                                                        onClick={() => handleComplete(dl.id)}
+                                                        onClick={() => setShowCompleteConfirm(dl)}
                                                         title={t('deadlines.markComplete')}
                                                     >
                                                         <Check size={14} />
+                                                    </button>
+                                                ) : (
+                                                    <button
+                                                        className="btn btn-warning btn-sm"
+                                                        onClick={() => handleRevert(dl.id)}
+                                                        title={t('deadlines.revert') || 'Annuler'}
+                                                        style={{ background: '#f59e0b' }}
+                                                    >
+                                                        ↺
                                                     </button>
                                                 )}
                                                 <button className="btn-icon" onClick={() => handleEdit(dl)} title={t('common.edit')}>
@@ -199,6 +215,30 @@ export default function DeadlinesPage() {
                     </button>
                     <button className="btn btn-primary" style={{ background: 'var(--danger)' }} onClick={() => showDeleteConfirm && handleDelete(showDeleteConfirm)}>
                         {t('common.delete')}
+                    </button>
+                </div>
+            </Modal>
+
+            {/* Complete Confirmation Modal */}
+            <Modal
+                isOpen={!!showCompleteConfirm}
+                onClose={() => setShowCompleteConfirm(null)}
+                title={t('common.confirm')}
+            >
+                <p style={{ marginBottom: '1rem' }}>
+                    {t('deadlines.confirmComplete') || 'Êtes-vous sûr de vouloir marquer cette échéance comme terminée ?'}
+                </p>
+                {showCompleteConfirm?.isRecurring && (
+                    <p style={{ marginBottom: '1.5rem', padding: '0.75rem', background: 'var(--info-bg, #e0f2fe)', borderRadius: '0.5rem', fontSize: '0.875rem' }}>
+                        ℹ️ {t('deadlines.recurringNote') || 'Cette échéance est récurrente. Une nouvelle échéance sera créée automatiquement après validation.'}
+                    </p>
+                )}
+                <div className="form-actions">
+                    <button className="btn btn-secondary" onClick={() => setShowCompleteConfirm(null)}>
+                        {t('common.cancel')}
+                    </button>
+                    <button className="btn btn-success" onClick={() => showCompleteConfirm && handleComplete(showCompleteConfirm)}>
+                        {t('deadlines.markComplete')}
                     </button>
                 </div>
             </Modal>

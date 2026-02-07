@@ -6,11 +6,11 @@ import { Camera, Upload, Check, Loader2, MapPin, Clock } from 'lucide-react';
 import { useApi } from '../hooks/useApi';
 
 interface EvidenceUploadProps {
-    checkId: string;
+    controlId: string;
     onSuccess: (evidence: any) => void;
 }
 
-export default function EvidenceUpload({ checkId, onSuccess }: EvidenceUploadProps) {
+export default function EvidenceUpload({ controlId, onSuccess }: EvidenceUploadProps) {
     const { t } = useTranslation();
     const api = useApi();
 
@@ -81,7 +81,7 @@ export default function EvidenceUpload({ checkId, onSuccess }: EvidenceUploadPro
 
         const formData = new FormData();
         formData.append('file', file);
-        formData.append('checkId', checkId);
+        formData.append('controlId', controlId);
         formData.append('description', description);
         formData.append('metadata', JSON.stringify(metadata || {}));
 
@@ -113,11 +113,11 @@ export default function EvidenceUpload({ checkId, onSuccess }: EvidenceUploadPro
                 <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', padding: '1rem' }}>
                     <button type="button" className="btn btn-secondary" onClick={() => setMode('CAMERA')} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem', padding: '1.5rem', minWidth: '120px' }}>
                         <Camera size={32} />
-                        <span>{t('evidence.takePhoto') || 'Prendre Photo'}</span>
+                        <span>{t('evidence.takePhoto')}</span>
                     </button>
                     <button type="button" className="btn btn-secondary" onClick={() => fileInputRef.current?.click()} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem', padding: '1.5rem', minWidth: '120px' }}>
                         <Upload size={32} />
-                        <span>{t('evidence.uploadFile') || 'Charger Fichier'}</span>
+                        <span>{t('evidence.uploadFile')}</span>
                     </button>
                     <input type="file" ref={fileInputRef} onChange={handleFileChange} style={{ display: 'none' }} accept="image/*,application/pdf" />
                 </div>
@@ -136,7 +136,7 @@ export default function EvidenceUpload({ checkId, onSuccess }: EvidenceUploadPro
                         <button type="button" className="btn btn-secondary" onClick={() => setMode('CHOICE')}>{t('common.cancel')}</button>
                         <button type="button" className="btn btn-primary" onClick={handleCapture}>
                             <Camera size={18} style={{ marginRight: '0.5rem' }} />
-                            {t('evidence.capture') || 'Capturer'}
+                            {t('evidence.capture')}
                         </button>
                     </div>
                 </div>
@@ -172,13 +172,13 @@ export default function EvidenceUpload({ checkId, onSuccess }: EvidenceUploadPro
                     </div>
 
                     <div className="form-group">
-                        <label className="form-label">{t('evidence.description') || 'Description du document'}</label>
+                        <label className="form-label">{t('evidence.description')}</label>
                         <textarea
                             className="form-control"
                             rows={2}
                             value={description}
                             onChange={(e) => setDescription(e.target.value)}
-                            placeholder={t('evidence.descriptionPlaceholder') || 'Ajoutez une note illustrative...'}
+                            placeholder={t('evidence.descriptionPlaceholder')}
                         />
                     </div>
 
