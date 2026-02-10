@@ -47,6 +47,7 @@ export default function DashboardPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [exporting, setExporting] = useState(false);
+    const [viewMode, setViewMode] = useState<'chart' | 'table'>('chart');
 
     useEffect(() => {
         let isMounted = true;
@@ -206,145 +207,256 @@ export default function DashboardPage() {
             {/* Compliance Charts Section - Professional Infographic Style */}
             {complianceBreakdown && complianceBreakdown.totalControls > 0 && (
                 <div className="card compliance-dashboard" style={{ marginTop: '2rem', padding: '2rem' }}>
-                    <h2 className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '2rem' }}>
-                        <TrendingUp size={22} />
-                        {t('dashboard.complianceTitle')}
-                    </h2>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+                        <h2 className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: 0 }}>
+                            <TrendingUp size={22} />
+                            {t('dashboard.complianceTitle')}
+                        </h2>
+                        <div style={{ display: 'flex', background: 'var(--gray-100)', padding: '0.25rem', borderRadius: 'var(--radius)', gap: '0.25rem' }}>
+                            <button
+                                onClick={() => setViewMode('chart')}
+                                style={{
+                                    padding: '0.4rem 0.8rem',
+                                    borderRadius: 'var(--radius)',
+                                    border: 'none',
+                                    background: viewMode === 'chart' ? '#fff' : 'transparent',
+                                    boxShadow: viewMode === 'chart' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
+                                    fontSize: '0.8rem',
+                                    fontWeight: 500,
+                                    color: viewMode === 'chart' ? 'var(--primary)' : 'var(--text-secondary)',
+                                    cursor: 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '0.4rem'
+                                }}
+                            >
+                                <TrendingUp size={14} />
+                                {t('dashboard.viewChart')}
+                            </button>
+                            <button
+                                onClick={() => setViewMode('table')}
+                                style={{
+                                    padding: '0.4rem 0.8rem',
+                                    borderRadius: 'var(--radius)',
+                                    border: 'none',
+                                    background: viewMode === 'table' ? '#fff' : 'transparent',
+                                    boxShadow: viewMode === 'table' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
+                                    fontSize: '0.8rem',
+                                    fontWeight: 500,
+                                    color: viewMode === 'table' ? 'var(--primary)' : 'var(--text-secondary)',
+                                    cursor: 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '0.4rem'
+                                }}
+                            >
+                                <FileText size={14} />
+                                {t('dashboard.viewTable')}
+                            </button>
+                        </div>
+                    </div>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: '320px 1fr', gap: '3rem' }}>
-                        {/* Radial Gauge - Main Score */}
-                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-                            <div style={{ position: 'relative', width: '220px', height: '220px' }}>
-                                {/* Background circle */}
-                                <svg viewBox="0 0 100 100" style={{ width: '100%', height: '100%', transform: 'rotate(-90deg)' }}>
-                                    <defs>
-                                        <linearGradient id="scoreGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                                            <stop offset="0%" stopColor={overallScore >= 70 ? '#10b981' : overallScore >= 40 ? '#f59e0b' : '#ef4444'} />
-                                            <stop offset="100%" stopColor={overallScore >= 70 ? '#34d399' : overallScore >= 40 ? '#fbbf24' : '#f87171'} />
-                                        </linearGradient>
-                                    </defs>
-                                    {/* Background track */}
-                                    <circle cx="50" cy="50" r="42" fill="none" stroke="var(--border-color, #e5e7eb)" strokeWidth="8" opacity="0.3" />
-                                    {/* Score arc */}
-                                    <circle
-                                        cx="50" cy="50" r="42"
-                                        fill="none"
-                                        stroke="url(#scoreGradient)"
-                                        strokeWidth="8"
-                                        strokeLinecap="round"
-                                        strokeDasharray={`${overallScore * 2.64} 264`}
-                                        style={{ transition: 'stroke-dasharray 1s ease-out' }}
-                                    />
-                                </svg>
-                                {/* Center content */}
-                                <div style={{
-                                    position: 'absolute',
-                                    top: '50%', left: '50%',
-                                    transform: 'translate(-50%, -50%)',
-                                    textAlign: 'center'
-                                }}>
+                    {viewMode === 'chart' ? (
+                        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(280px, 320px) 1fr', gap: '3rem', alignItems: 'start' }}>
+                            {/* Radial Gauge - Main Score */}
+                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                                <div style={{ position: 'relative', width: '220px', height: '220px' }}>
+                                    {/* Background circle */}
+                                    <svg viewBox="0 0 100 100" style={{ width: '100%', height: '100%', transform: 'rotate(-90deg)' }}>
+                                        <defs>
+                                            <linearGradient id="scoreGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                                                <stop offset="0%" stopColor={overallScore >= 70 ? '#10b981' : overallScore >= 40 ? '#f59e0b' : '#ef4444'} />
+                                                <stop offset="100%" stopColor={overallScore >= 70 ? '#34d399' : overallScore >= 40 ? '#fbbf24' : '#f87171'} />
+                                            </linearGradient>
+                                        </defs>
+                                        {/* Background track */}
+                                        <circle cx="50" cy="50" r="42" fill="none" stroke="var(--border-color, #e5e7eb)" strokeWidth="8" opacity="0.3" />
+                                        {/* Score arc */}
+                                        <circle
+                                            cx="50" cy="50" r="42"
+                                            fill="none"
+                                            stroke="url(#scoreGradient)"
+                                            strokeWidth="8"
+                                            strokeLinecap="round"
+                                            strokeDasharray={`${overallScore * 2.64} 264`}
+                                            style={{ transition: 'stroke-dasharray 1s ease-out' }}
+                                        />
+                                    </svg>
+                                    {/* Center content */}
                                     <div style={{
-                                        fontSize: '3rem',
-                                        fontWeight: 800,
-                                        lineHeight: 1,
-                                        background: `linear-gradient(135deg, ${overallScore >= 70 ? '#10b981, #34d399' : overallScore >= 40 ? '#f59e0b, #fbbf24' : '#ef4444, #f87171'})`,
-                                        WebkitBackgroundClip: 'text',
-                                        WebkitTextFillColor: 'transparent',
-                                        backgroundClip: 'text'
+                                        position: 'absolute',
+                                        top: '50%', left: '50%',
+                                        transform: 'translate(-50%, -50%)',
+                                        textAlign: 'center'
                                     }}>
-                                        {overallScore}%
+                                        <div style={{
+                                            fontSize: '3rem',
+                                            fontWeight: 800,
+                                            lineHeight: 1,
+                                            background: `linear-gradient(135deg, ${overallScore >= 70 ? '#10b981, #34d399' : overallScore >= 40 ? '#f59e0b, #fbbf24' : '#ef4444, #f87171'})`,
+                                            WebkitBackgroundClip: 'text',
+                                            WebkitTextFillColor: 'transparent',
+                                            backgroundClip: 'text'
+                                        }}>
+                                            {overallScore}%
+                                        </div>
+                                        <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary, #64748b)', marginTop: '0.25rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                                            {t('dashboard.conformity')}
+                                        </div>
                                     </div>
-                                    <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary, #64748b)', marginTop: '0.25rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                                        {t('dashboard.conformity')}
-                                    </div>
+                                </div>
+
+                                {/* Legend Pills */}
+                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginTop: '1.5rem', justifyContent: 'center' }}>
+                                    {pieData.map((item, i) => (
+                                        <div key={i} style={{
+                                            display: 'flex', alignItems: 'center', gap: '0.4rem',
+                                            padding: '0.35rem 0.75rem',
+                                            background: `${item.color}15`,
+                                            borderRadius: '999px',
+                                            fontSize: '0.75rem',
+                                            fontWeight: 500
+                                        }}>
+                                            <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: item.color }}></span>
+                                            <span style={{ color: 'var(--text-primary)' }}>{item.name}</span>
+                                            <span style={{ color: item.color, fontWeight: 700 }}>{item.value}</span>
+                                        </div>
+                                    ))}
                                 </div>
                             </div>
 
-                            {/* Legend Pills */}
-                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginTop: '1.5rem', justifyContent: 'center' }}>
-                                {pieData.map((item, i) => (
-                                    <div key={i} style={{
-                                        display: 'flex', alignItems: 'center', gap: '0.4rem',
-                                        padding: '0.35rem 0.75rem',
-                                        background: `${item.color}15`,
-                                        borderRadius: '999px',
-                                        fontSize: '0.75rem',
-                                        fontWeight: 500
-                                    }}>
-                                        <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: item.color }}></span>
-                                        <span style={{ color: 'var(--text-primary)' }}>{item.name}</span>
-                                        <span style={{ color: item.color, fontWeight: 700 }}>{item.value}</span>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
+                            {/* Category Breakdown - Modern Bars */}
+                            <div>
+                                <div style={{ fontSize: '0.875rem', fontWeight: 600, marginBottom: '1rem', color: 'var(--text-secondary, #64748b)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                                    {t('dashboard.byCategory')}
+                                </div>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                                    {complianceBreakdown.categories.map((cat, idx) => {
+                                        const total = cat.totalControls || 1;
+                                        const passPercent = (cat.passedControls / total) * 100;
+                                        const partialPercent = (cat.partialControls / total) * 100;
+                                        const failPercent = (cat.failedControls / total) * 100;
+                                        const uncheckPercent = (cat.notCheckedControls / total) * 100;
 
-                        {/* Category Breakdown - Modern Bars */}
-                        <div>
-                            <div style={{ fontSize: '0.875rem', fontWeight: 600, marginBottom: '1rem', color: 'var(--text-secondary, #64748b)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                                {t('dashboard.byCategory')}
-                            </div>
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                                {complianceBreakdown.categories.map((cat, idx) => {
-                                    const total = cat.totalControls || 1;
-                                    const passPercent = (cat.passedControls / total) * 100;
-                                    const partialPercent = (cat.partialControls / total) * 100;
-                                    const failPercent = (cat.failedControls / total) * 100;
-                                    const uncheckPercent = (cat.notCheckedControls / total) * 100;
-
-                                    return (
-                                        <div key={idx} style={{
-                                            padding: '1rem 1.25rem',
-                                            background: 'var(--bg-card-hover, #f8fafc)',
-                                            borderRadius: '12px',
-                                            border: '1px solid var(--border-light, #e2e8f0)'
-                                        }}>
-                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-                                                <span style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--text-primary)' }}>
-                                                    {t(`category.${cat.category}`, cat.category)}
-                                                </span>
-                                                <span style={{
-                                                    fontSize: '0.8rem',
-                                                    fontWeight: 700,
-                                                    color: cat.compliancePercent >= 70 ? '#10b981' : cat.compliancePercent >= 40 ? '#f59e0b' : '#ef4444'
-                                                }}>
-                                                    {cat.compliancePercent}%
-                                                </span>
-                                            </div>
-                                            {/* Stacked progress bar */}
-                                            <div style={{
-                                                height: '10px',
-                                                borderRadius: '999px',
-                                                overflow: 'hidden',
-                                                display: 'flex',
-                                                background: 'var(--border-color, #e5e7eb)'
+                                        return (
+                                            <div key={idx} style={{
+                                                padding: '1rem 1.25rem',
+                                                background: 'var(--bg-card-hover, #f8fafc)',
+                                                borderRadius: '12px',
+                                                border: '1px solid var(--border-light, #e2e8f0)'
                                             }}>
-                                                {passPercent > 0 && (
-                                                    <div style={{ width: `${passPercent}%`, background: 'linear-gradient(90deg, #10b981, #34d399)', transition: 'width 0.5s' }}></div>
-                                                )}
-                                                {partialPercent > 0 && (
-                                                    <div style={{ width: `${partialPercent}%`, background: 'linear-gradient(90deg, #f59e0b, #fbbf24)', transition: 'width 0.5s' }}></div>
-                                                )}
-                                                {failPercent > 0 && (
-                                                    <div style={{ width: `${failPercent}%`, background: 'linear-gradient(90deg, #ef4444, #f87171)', transition: 'width 0.5s' }}></div>
-                                                )}
-                                                {uncheckPercent > 0 && (
-                                                    <div style={{ width: `${uncheckPercent}%`, background: '#94a3b8', transition: 'width 0.5s' }}></div>
-                                                )}
+                                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+                                                    <span style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--text-primary)' }}>
+                                                        {t(`category.${cat.category}`, cat.category)}
+                                                    </span>
+                                                    <span style={{
+                                                        fontSize: '0.8rem',
+                                                        fontWeight: 700,
+                                                        color: cat.compliancePercent >= 70 ? '#10b981' : cat.compliancePercent >= 40 ? '#f59e0b' : '#ef4444'
+                                                    }}>
+                                                        {cat.compliancePercent}%
+                                                    </span>
+                                                </div>
+                                                {/* Stacked progress bar */}
+                                                <div style={{
+                                                    height: '10px',
+                                                    borderRadius: '999px',
+                                                    overflow: 'hidden',
+                                                    display: 'flex',
+                                                    background: 'var(--border-color, #e5e7eb)'
+                                                }}>
+                                                    {passPercent > 0 && (
+                                                        <div style={{ width: `${passPercent}%`, background: 'linear-gradient(90deg, #10b981, #34d399)', transition: 'width 0.5s' }}></div>
+                                                    )}
+                                                    {partialPercent > 0 && (
+                                                        <div style={{ width: `${partialPercent}%`, background: 'linear-gradient(90deg, #f59e0b, #fbbf24)', transition: 'width 0.5s' }}></div>
+                                                    )}
+                                                    {failPercent > 0 && (
+                                                        <div style={{ width: `${failPercent}%`, background: 'linear-gradient(90deg, #ef4444, #f87171)', transition: 'width 0.5s' }}></div>
+                                                    )}
+                                                    {uncheckPercent > 0 && (
+                                                        <div style={{ width: `${uncheckPercent}%`, background: '#94a3b8', transition: 'width 0.5s' }}></div>
+                                                    )}
+                                                </div>
+                                                {/* Mini stats */}
+                                                <div style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem', fontSize: '0.7rem', color: 'var(--text-secondary)' }}>
+                                                    <span><span style={{ color: '#10b981', fontWeight: 600 }}>{cat.passedControls}</span> {t('dashboard.ok')}</span>
+                                                    <span><span style={{ color: '#f59e0b', fontWeight: 600 }}>{cat.partialControls}</span> {t('dashboard.partial')}</span>
+                                                    <span><span style={{ color: '#ef4444', fontWeight: 600 }}>{cat.failedControls}</span> {t('dashboard.fail')}</span>
+                                                    <span><span style={{ color: '#94a3b8', fontWeight: 600 }}>{cat.notCheckedControls}</span> {t('dashboard.nv')}</span>
+                                                </div>
                                             </div>
-                                            {/* Mini stats */}
-                                            <div style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem', fontSize: '0.7rem', color: 'var(--text-secondary)' }}>
-                                                <span><span style={{ color: '#10b981', fontWeight: 600 }}>{cat.passedControls}</span> {t('dashboard.ok')}</span>
-                                                <span><span style={{ color: '#f59e0b', fontWeight: 600 }}>{cat.partialControls}</span> {t('dashboard.partial')}</span>
-                                                <span><span style={{ color: '#ef4444', fontWeight: 600 }}>{cat.failedControls}</span> {t('dashboard.fail')}</span>
-                                                <span><span style={{ color: '#94a3b8', fontWeight: 600 }}>{cat.notCheckedControls}</span> {t('dashboard.nv')}</span>
-                                            </div>
-                                        </div>
-                                    );
-                                })}
+                                        );
+                                    })}
+                                </div>
                             </div>
                         </div>
-                    </div>
+                    ) : (
+                        <div style={{ overflowX: 'auto' }}>
+                            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
+                                <thead>
+                                    <tr style={{ borderBottom: '2px solid var(--gray-100)' }}>
+                                        <th style={{ textAlign: 'start', padding: '1rem', color: 'var(--text-secondary)', fontWeight: 600 }}>{t('obligations.category')}</th>
+                                        <th style={{ textAlign: 'center', padding: '1rem', color: 'var(--text-secondary)', fontWeight: 600 }}>{t('dashboard.conformity')}</th>
+                                        <th style={{ textAlign: 'start', padding: '1rem', color: 'var(--text-secondary)', fontWeight: 600 }}>Détails</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {complianceBreakdown.categories.map((cat, idx) => {
+                                        const score = cat.compliancePercent;
+                                        return (
+                                            <tr key={idx} style={{ borderBottom: '1px solid var(--gray-50)' }}>
+                                                <td style={{ padding: '1rem', fontWeight: 600 }}>
+                                                    {t(`category.${cat.category}`, cat.category)}
+                                                </td>
+                                                <td style={{ padding: '1rem', textAlign: 'center' }}>
+                                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
+                                                        <span style={{
+                                                            fontWeight: 700,
+                                                            color: score >= 70 ? '#10b981' : score >= 40 ? '#f59e0b' : '#ef4444'
+                                                        }}>
+                                                            {score}%
+                                                        </span>
+                                                        <div style={{ width: '60px', height: '6px', background: '#e5e7eb', borderRadius: '3px', overflow: 'hidden' }}>
+                                                            <div style={{
+                                                                width: `${score}%`,
+                                                                height: '100%',
+                                                                background: score >= 70 ? '#10b981' : score >= 40 ? '#f59e0b' : '#ef4444'
+                                                            }} />
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td style={{ padding: '1rem' }}>
+                                                    <div style={{ display: 'flex', gap: '1rem', fontSize: '0.8rem' }}>
+                                                        <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                                                            <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#10b981' }} />
+                                                            <span style={{ fontWeight: 600, color: '#10b981' }}>{cat.passedControls}</span>
+                                                            <span style={{ color: 'var(--text-secondary)' }}>{t('dashboard.ok')}</span>
+                                                        </span>
+                                                        <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                                                            <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#f59e0b' }} />
+                                                            <span style={{ fontWeight: 600, color: '#f59e0b' }}>{cat.partialControls}</span>
+                                                            <span style={{ color: 'var(--text-secondary)' }}>{t('dashboard.partial')}</span>
+                                                        </span>
+                                                        <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                                                            <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#ef4444' }} />
+                                                            <span style={{ fontWeight: 600, color: '#ef4444' }}>{cat.failedControls}</span>
+                                                            <span style={{ color: 'var(--text-secondary)' }}>{t('dashboard.fail')}</span>
+                                                        </span>
+                                                        <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                                                            <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#94a3b8' }} />
+                                                            <span style={{ fontWeight: 600, color: '#94a3b8' }}>{cat.notCheckedControls}</span>
+                                                            <span style={{ color: 'var(--text-secondary)' }}>{t('dashboard.nv')}</span>
+                                                        </span>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
                 </div>
             )}
 
@@ -382,26 +494,28 @@ export default function DashboardPage() {
             </div>
 
             {/* Category Breakdown (Legacy) */}
-            {obligationSummary?.byCategory && obligationSummary.byCategory.length > 0 && (
-                <div className="card">
-                    <h2 className="card-title">{t('dashboard.byCategory')}</h2>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '1rem', marginTop: '1rem' }}>
-                        {obligationSummary.byCategory.map((item) => (
-                            <div key={item.category} style={{ textAlign: 'center', padding: '1rem', background: 'var(--gray-50)', borderRadius: 'var(--radius)' }}>
-                                <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--primary)' }}>{item.total}</div>
-                                <div style={{ fontSize: '0.875rem', color: 'var(--gray-500)' }}>
-                                    {t(`category.${item.category}`, item.category)}
-                                </div>
-                                {item.highRisk > 0 && (
-                                    <div style={{ fontSize: '0.75rem', color: 'var(--danger)', marginTop: '0.25rem' }}>
-                                        ⚠️ {item.highRisk} {t('dashboard.highRisk')}
+            {
+                obligationSummary?.byCategory && obligationSummary.byCategory.length > 0 && (
+                    <div className="card">
+                        <h2 className="card-title">{t('dashboard.byCategory')}</h2>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '1rem', marginTop: '1rem' }}>
+                            {obligationSummary.byCategory.map((item) => (
+                                <div key={item.category} style={{ textAlign: 'center', padding: '1rem', background: 'var(--gray-50)', borderRadius: 'var(--radius)' }}>
+                                    <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--primary)' }}>{item.total}</div>
+                                    <div style={{ fontSize: '0.875rem', color: 'var(--gray-500)' }}>
+                                        {t(`category.${item.category}`, item.category)}
                                     </div>
-                                )}
-                            </div>
-                        ))}
+                                    {item.highRisk > 0 && (
+                                        <div style={{ fontSize: '0.75rem', color: 'var(--danger)', marginTop: '0.25rem' }}>
+                                            ⚠️ {item.highRisk} {t('dashboard.highRisk')}
+                                        </div>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
                     </div>
-                </div>
-            )}
-        </div>
+                )
+            }
+        </div >
     );
 }

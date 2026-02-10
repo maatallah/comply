@@ -34,7 +34,8 @@ async function seedJort() {
             date: new Date('2025-05-23'),
             status: 'RELEVANT',
             processed: true,
-            pdfUrl: 'http://www.iort.gov.tn/'
+            pdfUrl: 'http://www.iort.gov.tn/',
+            recordId: '202524'
         }
     ];
 

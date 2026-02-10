@@ -263,6 +263,7 @@ model JortEntry {
   ministry     String?  // Ministry or Entity extracted
   type         String?  // Decree, Law, Order, etc.
   jortNumber   String?  @map("jort_number")
+  recordId     String?  @unique @map("record_id") // PIST ID for linking
   date         DateTime?
   pdfUrl       String?  @map("pdf_url")
   status       String   @default("PENDING") // PENDING, RELEVANT, IGNORED

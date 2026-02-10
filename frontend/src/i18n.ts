@@ -51,6 +51,9 @@ const fr = {
             ok: 'OK',
             fail: 'Échec',
             nv: 'N/V',
+            highRisk: 'Haut Risque',
+            viewChart: 'Graphique',
+            viewTable: 'Tableau',
         },
         // Obligations
         obligations: {
@@ -339,6 +342,9 @@ const ar = {
             ok: 'صحيح',
             fail: 'خطأ',
             nv: 'غ/م',
+            highRisk: 'عالي المخاطر',
+            viewChart: 'رسم بياني',
+            viewTable: 'جدول',
         },
         obligations: {
             title: 'التزاماتي',

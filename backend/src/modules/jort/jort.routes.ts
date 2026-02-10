@@ -1,18 +1,19 @@
 import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import { jortService } from './jort.service';
+import { jortScraper } from './jort.scraper';
 import { CreateJortEntrySchema, ListJortQuerySchema } from './jort.types';
 
 export async function jortRoutes(app: FastifyInstance) {
 
-    // GET /jort-feed
-    app.get('/jort-feed', async (request: FastifyRequest, reply: FastifyReply) => {
+    // GET /jort-feed (list entries)
+    app.get('/', async (request: FastifyRequest, reply: FastifyReply) => {
         const query = ListJortQuerySchema.parse(request.query);
         const result = await jortService.listEntries(query);
         return reply.send({ success: true, ...result });
     });
 
     // POST /jort-feed/:id/process
-    app.post('/jort-feed/:id/process', { preHandler: [app.authenticate] }, async (request: any, reply: FastifyReply) => {
+    app.post('/:id/process', { preHandler: [app.authenticate] }, async (request: any, reply: FastifyReply) => {
         const { id } = request.params;
         const { status } = request.body as { status: 'RELEVANT' | 'IGNORED' };
 
@@ -25,9 +26,23 @@ export async function jortRoutes(app: FastifyInstance) {
     });
 
     // Manual creation (for debugging or manual curation)
-    app.post('/jort-feed', { preHandler: [app.authenticate] }, async (request: FastifyRequest, reply: FastifyReply) => {
+    app.post('/', { preHandler: [app.authenticate] }, async (request: FastifyRequest, reply: FastifyReply) => {
         const data = CreateJortEntrySchema.parse(request.body);
         const entry = await jortService.createEntry(data);
         return reply.status(201).send({ success: true, data: entry });
+    });
+
+    // Trigger scraper (for testing/manual trigger - no auth for convenience)
+    app.post('/scrape', async (request: FastifyRequest, reply: FastifyReply) => {
+        try {
+            const results = await jortScraper.scrapeLatest();
+            return reply.send({ success: true, message: 'Scrape complete', data: results });
+        } catch (error: any) {
+            request.log.error(`Manual scrape failed: ${error.message}`);
+            return reply.status(500).send({
+                success: false,
+                error: 'Scraping failed due to a technical error. Please check system alerts.'
+            });
+        }
     });
 }

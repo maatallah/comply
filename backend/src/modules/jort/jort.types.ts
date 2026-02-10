@@ -14,6 +14,7 @@ export const CreateJortEntrySchema = z.object({
     ministry: z.string().optional(),
     type: z.string().optional(), // Law, Decree, etc.
     jortNumber: z.string().optional(),
+    recordId: z.string().optional(),
     date: z.string().datetime().optional(),
     pdfUrl: z.string().url().optional(),
 });
@@ -23,6 +24,7 @@ export const ListJortQuerySchema = z.object({
     limit: z.coerce.number().int().min(1).max(100).default(20),
     status: z.enum(['PENDING', 'RELEVANT', 'IGNORED']).optional(),
     ministry: z.string().optional(),
+    search: z.string().optional(),
 });
 
 // ==================== TYPES ====================
