@@ -69,6 +69,9 @@ export class ControlRepository {
                     checks: {
                         orderBy: { checkDate: 'desc' },
                         take: 1,
+                        include: {
+                            evidence: true,
+                        },
                     },
                 },
             }),

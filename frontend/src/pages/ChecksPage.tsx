@@ -24,6 +24,7 @@ export default function ChecksPage() {
     const [checks, setChecks] = useState<Check[]>([]);
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState<string>('all');
+    const [emailing, setEmailing] = useState<string | null>(null);
 
     const fetchChecks = async (status?: string) => {
         setLoading(true);
@@ -37,6 +38,18 @@ export default function ChecksPage() {
             setChecks([]);
         }
         setLoading(false);
+    };
+
+    const handleEmail = async (id: string) => {
+        setEmailing(id);
+        const result = await api.emailCheck(id);
+        setEmailing(null);
+
+        if (result.success) {
+            alert(t('common.emailSent') || 'Email envoyé avec succès');
+        } else {
+            alert(t('common.error') || 'Une erreur est survenue');
+        }
     };
 
     useEffect(() => {
@@ -96,6 +109,7 @@ export default function ChecksPage() {
                                     <th>{t('common.status')}</th>
                                     <th>{t('checks.checkedBy') || 'Vérifié par'}</th>
                                     <th>{t('checks.findings') || 'Constats'}</th>
+                                    <th>{t('common.actions') || 'Actions'}</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -115,6 +129,17 @@ export default function ChecksPage() {
                                             <div style={{ fontSize: '0.875rem' }} className="truncate">
                                                 {check.findings || '-'}
                                             </div>
+                                        </td>
+                                        <td>
+                                            <button
+                                                className="btn btn-sm btn-outline-primary"
+                                                onClick={() => handleEmail(check.id)}
+                                                disabled={emailing === check.id}
+                                                style={{ fontSize: '0.75rem', padding: '0.2rem 0.5rem' }}
+                                                title="Envoyer le rapport par email"
+                                            >
+                                                {emailing === check.id ? '...' : 'Email'}
+                                            </button>
                                         </td>
                                     </tr>
                                 ))}

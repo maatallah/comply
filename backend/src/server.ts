@@ -49,6 +49,7 @@ const app = Fastify({
     logger: {
         level: process.env.LOG_LEVEL || 'info',
     },
+    bodyLimit: 50 * 1024 * 1024, // 50MB
 });
 
 // Health check route
@@ -100,7 +101,7 @@ const start = async () => {
         // Register Multipart for file uploads
         await app.register(multipart, {
             limits: {
-                fileSize: 10 * 1024 * 1024 // 10MB
+                fileSize: 50 * 1024 * 1024 // 50MB
             }
         });
 

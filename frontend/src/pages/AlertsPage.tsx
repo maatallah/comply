@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useApi } from '../hooks/useApi';
-import { Bell, CheckCheck, Inbox, AlertTriangle, Trash2, Square, CheckSquare, CheckCircle } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Bell, CheckCheck, Inbox, AlertTriangle, Trash2, Square, CheckSquare, CheckCircle, Eye } from 'lucide-react';
 
 interface Alert {
     id: string;
@@ -13,6 +14,7 @@ interface Alert {
     type: string;
     isRead: boolean;
     createdAt: string;
+    checkId?: string;
 }
 
 export default function AlertsPage() {
@@ -221,6 +223,19 @@ export default function AlertsPage() {
                                     <p className="alert-message">
                                         {i18n.language === 'ar' && alert.messageAr ? alert.messageAr : alert.messageFr}
                                     </p>
+
+                                    {alert.checkId && (
+                                        <div style={{ marginTop: '0.75rem', display: 'flex', justifyContent: 'flex-start' }}>
+                                            <Link
+                                                to={`/action-plans?highlight=${alert.checkId}`}
+                                                className="btn btn-sm btn-outline-primary"
+                                                style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                                            >
+                                                <Eye size={14} />
+                                                {t('alerts.viewDetails') || 'Voir les détails'}
+                                            </Link>
+                                        </div>
+                                    )}
 
                                 </div>
                             </div>

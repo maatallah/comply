@@ -25,7 +25,7 @@ export class CheckService {
         }
 
         // Create the check
-        const check = await checkRepository.create(companyId, data);
+        const check = await checkRepository.create(companyId, userId, data);
 
         // Link any evidence previously uploaded for this control that wasn't yet linked
         await evidenceService.linkToCheck(companyId, check.controlId, check.id);
@@ -39,6 +39,7 @@ export class CheckService {
                 messageFr: `Le contrôle "${control.titleFr}" a été marqué comme ${check.status}. Findings: ${check.findings || 'N/A'}. Action corrective requise.`,
                 type: 'NON_COMPLIANCE',
                 severity: check.status === 'FAIL' ? 'HIGH' : 'MEDIUM',
+                checkId: check.id,
             });
         }
 
@@ -102,6 +103,7 @@ export class CheckService {
                 messageFr: `Le statut du contrôle "${(check as any).control.titleFr}" a été mis à jour à ${data.status}.`,
                 type: 'NON_COMPLIANCE',
                 severity: data.status === 'FAIL' ? 'HIGH' : 'MEDIUM',
+                checkId: check.id,
             });
         }
 
@@ -121,6 +123,44 @@ export class CheckService {
         }
 
         await checkRepository.delete(id);
+    }
+
+    // Email check result
+    async emailCheckResult(id: string, companyId: string, targetEmail: string): Promise<void> {
+        const check = await prisma.check.findUnique({
+            where: { id },
+            include: {
+                control: true,
+                user: true // The checker
+            }
+        });
+
+        if (!check) {
+            throw new Error('CHECK_NOT_FOUND');
+        }
+
+        if (check.companyId !== companyId) {
+            throw new Error('ACCESS_DENIED');
+        }
+
+        // Lazy load email service
+        const { emailService } = require('../../shared/email/email.service');
+        const { emailTemplates } = require('../../shared/email/email.templates');
+
+        const html = emailTemplates.checkResult({
+            controlTitle: check.control.titleFr,
+            status: check.status,
+            checkDate: check.checkDate,
+            findings: check.findings || undefined,
+            correctiveActions: check.correctiveActions || undefined,
+            checkerName: check.user ? `${check.user.firstName} ${check.user.lastName}` : 'Inconnu'
+        });
+
+        await emailService.sendEmail({
+            to: targetEmail,
+            subject: `[Comply] Résultat de contrôle : ${check.control.titleFr}`,
+            html
+        });
     }
 }
 

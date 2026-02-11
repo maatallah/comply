@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useApi } from '../hooks/useApi';
-import { AlertCircle, CheckCircle2, ExternalLink } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { useSearchParams, Link } from 'react-router-dom';
+import { AlertCircle, CheckCircle2, ExternalLink, FileText, Eye } from 'lucide-react';
 
 interface Check {
     id: string;
@@ -16,29 +16,62 @@ interface Check {
         titleFr: string;
         titleAr?: string;
     };
+    evidence?: {
+        id: string;
+        fileName: string;
+        fileType: string;
+    }[];
 }
 
 export default function ActionPlansPage() {
     const { t, i18n } = useTranslation();
     const api = useApi();
+    const [searchParams] = useSearchParams();
+    const highlightId = searchParams.get('highlight');
 
     const [plans, setPlans] = useState<Check[]>([]);
     const [loading, setLoading] = useState(true);
+    const [emailing, setEmailing] = useState<string | null>(null);
 
     const fetchActionPlans = async () => {
         setLoading(true);
         const result = await api.getChecks({ hasActionPlan: 'true' });
-        if (result.success && result.data?.checks) {
-            setPlans(result.data.checks);
+        if (result.success && result.data) {
+            setPlans(result.data);
         } else {
             setPlans([]);
         }
         setLoading(false);
     };
 
+    const handleEmail = async (id: string) => {
+        setEmailing(id);
+        const result = await api.emailCheck(id);
+        setEmailing(null);
+
+        if (result.success) {
+            alert(t('common.emailSent') || 'Email envoyé avec succès');
+        } else {
+            alert(t('common.error') || 'Une erreur est survenue');
+        }
+    };
+
     useEffect(() => {
         fetchActionPlans();
     }, []);
+
+    useEffect(() => {
+        if (highlightId && !loading && plans.length > 0) {
+            setTimeout(() => {
+                const el = document.getElementById(`plan-${highlightId}`);
+                if (el) {
+                    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    el.style.transition = 'box-shadow 0.5s';
+                    el.style.boxShadow = '0 0 0 4px rgba(59, 130, 246, 0.5)';
+                }
+            }, 500);
+        }
+    }, [highlightId, loading, plans]);
 
     if (loading) {
         return <div className="loading">{t('common.loading')}</div>;
@@ -59,7 +92,7 @@ export default function ActionPlansPage() {
                 ) : (
                     <div className="plans-list">
                         {plans.map(plan => (
-                            <div key={plan.id} className="card" style={{ marginBottom: '1rem', borderLeft: '4px solid var(--danger)' }}>
+                            <div key={plan.id} id={`plan-${plan.id}`} className="card" style={{ marginBottom: '1rem', borderLeft: '4px solid var(--danger)' }}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                                     <div>
                                         <h3 style={{ fontSize: '1.1rem', marginBottom: '0.25rem' }}>
@@ -89,7 +122,72 @@ export default function ActionPlansPage() {
                                     </p>
                                 </div>
 
-                                <div style={{ marginTop: '1.25rem', paddingTop: '1rem', borderTop: '1px solid var(--gray-200)', display: 'flex', justifyContent: 'flex-end' }}>
+                                {plan.evidence && plan.evidence.length > 0 && (
+                                    <div style={{ marginTop: '1rem' }}>
+                                        <h4 style={{ fontSize: '0.9rem', fontWeight: 600, marginBottom: '0.5rem' }}>
+                                            {t('checks.evidence') || 'Preuves'}
+                                        </h4>
+                                        <div style={{ display: 'grid', gap: '0.5rem' }}>
+                                            {plan.evidence.map((ev, idx) => (
+                                                <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem', background: '#f9fafb', border: '1px solid var(--gray-200)', borderRadius: 'var(--radius)' }}>
+                                                    {ev.fileType?.startsWith('image/') ? (
+                                                        <img
+                                                            src={`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/evidence/file/${ev.id}`}
+                                                            alt={ev.fileName}
+                                                            style={{ width: 32, height: 32, objectFit: 'cover', borderRadius: 4, cursor: 'pointer' }}
+                                                            onClick={async () => {
+                                                                const blob = await api.getEvidenceFile(ev.id);
+                                                                if (blob) {
+                                                                    const url = window.URL.createObjectURL(blob);
+                                                                    window.open(url, '_blank');
+                                                                }
+                                                            }}
+                                                        />
+                                                    ) : (
+                                                        <FileText size={16} className="text-primary" />
+                                                    )}
+                                                    <span
+                                                        onClick={async () => {
+                                                            const blob = await api.getEvidenceFile(ev.id);
+                                                            if (blob) {
+                                                                const url = window.URL.createObjectURL(blob);
+                                                                window.open(url, '_blank');
+                                                            }
+                                                        }}
+                                                        style={{ flex: 1, fontSize: '0.875rem', textDecoration: 'underline', color: 'inherit', cursor: 'pointer' }}
+                                                        className="truncate"
+                                                    >
+                                                        {ev.fileName}
+                                                    </span>
+                                                    <button
+                                                        type="button"
+                                                        className="btn-icon"
+                                                        onClick={async () => {
+                                                            const blob = await api.getEvidenceFile(ev.id);
+                                                            if (blob) {
+                                                                const url = window.URL.createObjectURL(blob);
+                                                                window.open(url, '_blank');
+                                                            }
+                                                        }}
+                                                        title={t('evidence.preview') || 'Voir'}
+                                                    >
+                                                        <Eye size={16} />
+                                                    </button>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+
+                                <div style={{ marginTop: '1.25rem', paddingTop: '1rem', borderTop: '1px solid var(--gray-200)', display: 'flex', justifyContent: 'flex-end', gap: '0.5rem' }}>
+                                    <button
+                                        className="btn btn-sm btn-outline-primary"
+                                        onClick={() => handleEmail(plan.id)}
+                                        disabled={emailing === plan.id}
+                                        title="Envoyer le rapport par email"
+                                    >
+                                        {emailing === plan.id ? '...' : (t('common.email') || 'Email')}
+                                    </button>
                                     <Link to="/controls" className="btn btn-sm btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                                         <ExternalLink size={14} />
                                         {t('controls.viewControl') || 'Voir le Contrôle'}

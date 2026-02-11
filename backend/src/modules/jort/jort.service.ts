@@ -67,10 +67,24 @@ export class JortService {
                 impactMsgFr = `\n\nDomaines impactés : ${impact.categories.join(', ')}`;
             }
 
-            // Generate alerts for all companies to notify them of a new regulatory update
-            const companies = await prisma.company.findMany();
+            // Generate alerts for all companies
+            const companies = await prisma.company.findMany({
+                include: {
+                    users: {
+                        where: {
+                            role: { in: ['COMPANY_ADMIN', 'COMPLIANCE_OFFICER'] },
+                            isActive: true
+                        }
+                    }
+                }
+            });
+
+            // Lazy load email service to avoid circular deps if any
+            const { emailService } = require('../../shared/email/email.service');
+            const { emailTemplates } = require('../../shared/email/email.templates');
 
             for (const company of companies) {
+                // 1. Create In-App Alert
                 await prisma.alert.create({
                     data: {
                         companyId: company.id,
@@ -82,6 +96,19 @@ export class JortService {
                         messageAr: entry.titleAr ? `تم تحديد منشور جديد ذو صلة : "${entry.titleAr}". يرجى التحقق من تأثيره على أنشطتكم.` : null,
                     }
                 });
+
+                // 2. Send Email if High/Critical Impact (Score > 50)
+                if (impact.score > 50 && company.users.length > 0) {
+                    const emailHtml = emailTemplates.newRegulationAlert(entry, impact);
+                    const recipients = company.users.map(u => u.email);
+
+                    // Send in background, don't await blocking
+                    emailService.sendEmail({
+                        to: recipients,
+                        subject: `[JORT] Nouvelle Réglementation : ${entry.titleFr.substring(0, 50)}...`,
+                        html: emailHtml
+                    }).catch((err: any) => console.error('Failed to send JORT email:', err));
+                }
             }
         }
 

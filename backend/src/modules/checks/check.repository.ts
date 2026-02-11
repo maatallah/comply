@@ -7,7 +7,7 @@ import type { CreateCheckInput, UpdateCheckInput, ListChecksQuery } from './chec
 export class CheckRepository {
 
     // Create check
-    async create(companyId: string, data: CreateCheckInput): Promise<Check> {
+    async create(companyId: string, userId: string, data: CreateCheckInput): Promise<Check> {
         return prisma.check.create({
             data: {
                 companyId,
@@ -16,7 +16,7 @@ export class CheckRepository {
                 status: data.status,
                 findings: data.findings,
                 correctiveActions: data.correctiveActions,
-                performedBy: data.checkedBy || '',
+                performedBy: userId,
                 nextCheckDue: data.nextCheckDate ? new Date(data.nextCheckDate) : null,
             },
             include: {
@@ -60,9 +60,9 @@ export class CheckRepository {
         }
 
         if (query.hasActionPlan === true) {
-            where.correctiveActions = { not: null, notIn: [''] };
+            where.status = { in: ['FAIL', 'PARTIAL'] };
         } else if (query.hasActionPlan === false) {
-            where.correctiveActions = { in: [null, ''] };
+            where.status = { notIn: ['FAIL', 'PARTIAL'] };
         }
 
         const [checks, total] = await Promise.all([

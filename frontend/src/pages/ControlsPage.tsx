@@ -181,16 +181,22 @@ export default function ControlsPage() {
                 onClose={() => setShowCheckModal(null)}
                 title={t('checks.performCheck') || 'Enregistrer une vérification'}
             >
-                {showCheckModal && (
-                    <CheckForm
-                        controlId={showCheckModal}
-                        onSave={() => {
-                            setShowCheckModal(null);
-                            fetchControls();
-                        }}
-                        onCancel={() => setShowCheckModal(null)}
-                    />
-                )}
+                {showCheckModal && (() => {
+                    const control = controls.find(c => c.id === showCheckModal);
+                    const latestCheck = control?.checks && control.checks.length > 0 ? control.checks[0] : undefined;
+
+                    return (
+                        <CheckForm
+                            controlId={showCheckModal}
+                            initialData={latestCheck}
+                            onSave={() => {
+                                setShowCheckModal(null);
+                                fetchControls();
+                            }}
+                            onCancel={() => setShowCheckModal(null)}
+                        />
+                    );
+                })()}
             </Modal>
         </div>
     );

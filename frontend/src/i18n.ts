@@ -83,6 +83,7 @@ const fr = {
             type: 'Type',
             noData: 'Aucun contrôle défini',
             noDataHint: 'Les contrôles seront ajoutés pour vos obligations',
+            viewControl: 'Voir le Contrôle',
         },
         // Deadlines
         deadlines: {
@@ -160,6 +161,8 @@ const fr = {
             selected: 'sélectionné(s)',
             selectAll: 'Tout sélectionner',
             selectFirst: 'Sélectionner l\'élément d\'abord',
+            email: 'Email',
+            emailSent: 'Email envoyé avec succès',
         },
         // Regulatory
         regulatory: {
@@ -260,6 +263,7 @@ const fr = {
             unread: 'Non lue',
             approaching: 'Échéance proche',
             missed: 'Échéance dépassée',
+            viewDetails: 'Voir les détails',
         },
         // Messages
         messages: {
@@ -372,6 +376,7 @@ const ar = {
             type: 'النوع',
             noData: 'لا توجد ضوابط محددة',
             noDataHint: 'سيتم إضافة الضوابط لالتزاماتك',
+            viewControl: 'عرض الضابط',
         },
         deadlines: {
             title: 'المواعيد النهائية',
@@ -442,6 +447,8 @@ const ar = {
             selected: 'محدد',
             selectAll: 'تحديد الكل',
             selectFirst: 'اختر العنصر أولاً',
+            email: 'بريد إلكتروني',
+            emailSent: 'تم إرسال البريد الإلكتروني بنجاح',
         },
         // Regulatory
         regulatory: {
@@ -551,6 +558,7 @@ const ar = {
             unread: 'غير مقروء',
             approaching: 'اقتراب الموعد',
             missed: 'فوات الموعد',
+            viewDetails: 'عرض التفاصيل',
         },
         messages: {
             createSuccess: 'تم إنشاء العنصر بنجاح',

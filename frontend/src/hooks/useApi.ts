@@ -14,7 +14,11 @@ export function useApi() {
         };
 
         // Only set Content-Type if there's a body and it's not already set
-        if (options.body && !(headers as Record<string, string>)['Content-Type']) {
+        // Only set Content-Type if there's a body and it's not already set
+        // AND request body is NOT FormData (browser handles Content-Type + boundary for FormData)
+        if (options.body &&
+            !(options.body instanceof FormData) &&
+            !(headers as Record<string, string>)['Content-Type']) {
             (headers as Record<string, string>)['Content-Type'] = 'application/json';
         }
 
@@ -142,6 +146,14 @@ export function useApi() {
             method: 'POST',
             body: JSON.stringify(data)
         }),
+        emailCheck: (id: string, email?: string) => fetchWithAuth(`/checks/${id}/email`, {
+            method: 'POST',
+            body: JSON.stringify({ email })
+        }),
+        updateCheck: (id: string, data: any) => fetchWithAuth(`/checks/${id}`, {
+            method: 'PUT',
+            body: JSON.stringify(data)
+        }),
 
         // ============ EVIDENCE ============
         uploadEvidence: (formData: FormData) => fetchWithAuth('/evidence/upload', {
@@ -152,6 +164,20 @@ export function useApi() {
         getEvidence: (params?: Record<string, string>) => {
             const query = params ? `?${new URLSearchParams(params)}` : '';
             return fetchWithAuth(`/evidence${query}`);
+        },
+        getEvidenceFile: async (id: string) => {
+            const currentToken = localStorage.getItem('token') || token;
+            const response = await fetch(`${API_URL}/evidence/file/${id}`, {
+                headers: {
+                    'Authorization': `Bearer ${currentToken}`
+                }
+            });
+
+            if (!response.ok) {
+                console.error('Failed to fetch file');
+                return null;
+            }
+            return response.blob();
         },
         deleteEvidence: (id: string) => fetchWithAuth(`/evidence/${id}`, { method: 'DELETE' }),
 

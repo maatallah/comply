@@ -27,7 +27,7 @@ export async function checkRoutes(app: FastifyInstance) {
 
     // ========== LIST CHECKS ==========
     // GET /checks
-    app.get('/checks', { preHandler: [app.authenticate] }, async (request: FastifyRequest, reply: FastifyReply) => {
+    app.get('/checks', { preHandler: [app.authenticate] }, async (request, reply) => {
         const user = request.user;
 
         const parseResult = ListChecksQuerySchema.safeParse(request.query);
@@ -54,7 +54,7 @@ export async function checkRoutes(app: FastifyInstance) {
 
     // ========== GET SINGLE CHECK ==========
     // GET /checks/:id
-    app.get('/checks/:id', { preHandler: [app.authenticate] }, async (request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) => {
+    app.get<{ Params: { id: string } }>('/checks/:id', { preHandler: [app.authenticate] }, async (request, reply) => {
         try {
             const user = request.user;
             const { id } = request.params;
@@ -84,7 +84,7 @@ export async function checkRoutes(app: FastifyInstance) {
 
     // ========== CREATE CHECK (Record verification) ==========
     // POST /checks
-    app.post('/checks', { preHandler: [app.authenticate] }, async (request: FastifyRequest, reply: FastifyReply) => {
+    app.post('/checks', { preHandler: [app.authenticate] }, async (request, reply) => {
         try {
             const user = request.user;
 
@@ -125,7 +125,7 @@ export async function checkRoutes(app: FastifyInstance) {
 
     // ========== UPDATE CHECK ==========
     // PUT /checks/:id
-    app.put('/checks/:id', { preHandler: [app.authenticate] }, async (request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) => {
+    app.put<{ Params: { id: string } }>('/checks/:id', { preHandler: [app.authenticate] }, async (request, reply) => {
         try {
             const user = request.user;
             const { id } = request.params;
@@ -157,7 +157,7 @@ export async function checkRoutes(app: FastifyInstance) {
 
     // ========== DELETE CHECK ==========
     // DELETE /checks/:id
-    app.delete('/checks/:id', { preHandler: [app.authenticate] }, async (request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) => {
+    app.delete<{ Params: { id: string } }>('/checks/:id', { preHandler: [app.authenticate] }, async (request, reply) => {
         try {
             const user = request.user;
             const { id } = request.params;
@@ -177,6 +177,37 @@ export async function checkRoutes(app: FastifyInstance) {
                 return reply.status(404).send({
                     success: false,
                     error: { code: 'CHECK_NOT_FOUND', message: 'Vérification introuvable' },
+                });
+            }
+            throw error;
+        }
+    });
+
+    // ========== EMAIL CHECK RESULT ==========
+    // POST /checks/:id/email
+    app.post<{ Params: { id: string }, Body: { email?: string } }>('/checks/:id/email', { preHandler: [app.authenticate] }, async (request, reply) => {
+        try {
+            const user = request.user;
+            const { id } = request.params;
+            const targetEmail = request.body?.email || user.email;
+
+            await checkService.emailCheckResult(id, user.companyId, targetEmail);
+
+            return reply.send({
+                success: true,
+                message: 'Email envoyé avec succès'
+            });
+        } catch (error: any) {
+            if (error.message === 'CHECK_NOT_FOUND') {
+                return reply.status(404).send({
+                    success: false,
+                    error: { code: 'CHECK_NOT_FOUND', message: 'Vérification introuvable' },
+                });
+            }
+            if (error.message === 'ACCESS_DENIED') {
+                return reply.status(403).send({
+                    success: false,
+                    error: { code: 'ACCESS_DENIED', message: 'Accès refusé' },
                 });
             }
             throw error;

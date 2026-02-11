@@ -72,6 +72,7 @@ export class AlertService {
         messageAr?: string;
         type: string;
         severity: string;
+        checkId?: string;
     }): Promise<Alert> {
         return prisma.alert.create({
             data: {
@@ -83,6 +84,7 @@ export class AlertService {
                 messageAr: data.messageAr,
                 type: data.type,
                 severity: data.severity,
+                checkId: data.checkId,
                 isRead: false
             }
         });
