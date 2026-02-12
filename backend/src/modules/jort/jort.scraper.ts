@@ -349,12 +349,37 @@ export class JortScraper {
         });
 
         if (existing) {
+            let updated = false;
+            const updateData: any = {};
+
             // Check if we need to backfill recordId
             if (!existing.recordId && entry.recordId) {
                 console.log(`🔄 Backfilling recordId for: ${entry.titleFr.substring(0, 30)}...`);
+                updateData.recordId = entry.recordId;
+                updated = true;
+            }
+
+            // Check if we need to backfill PDF URL (Self-Healing)
+            if (!existing.pdfUrl && (existing.recordId || entry.recordId)) {
+                // Use the available recordId
+                const targetRecordId = existing.recordId || entry.recordId;
+                console.log(`📄 Backfilling PDF for existing record: ${targetRecordId}...`);
+
+                // Add a small delay to respect server
+                await new Promise(resolve => setTimeout(resolve, 500));
+
+                const pdfUrl = await this.extractPdfUrl(targetRecordId);
+                if (pdfUrl) {
+                    updateData.pdfUrl = pdfUrl;
+                    updated = true;
+                    console.log(`   └─ Found PDF: ${pdfUrl}`);
+                }
+            }
+
+            if (updated) {
                 await prisma.jortEntry.update({
                     where: { id: existing.id },
-                    data: { recordId: entry.recordId }
+                    data: updateData
                 });
             }
             return true;
