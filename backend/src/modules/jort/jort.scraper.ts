@@ -16,10 +16,12 @@ interface ParsedEntry {
     titleFr: string;
     titleAr?: string;
     ministry?: string;
+    ministryAr?: string;
     type?: string;
     date?: string;
     recordId: string;
-    pdfUrl?: string; // Enhanced to be possibly undefined initially, then filled
+    pdfUrl?: string;
+    pdfUrlAr?: string;
 }
 
 interface ScraperStats {
@@ -81,11 +83,17 @@ export class JortScraper {
                         } else {
                             // Fetch PDF URL for new entry
                             console.log(`📄 Fetching PDF for record ${entry.recordId}...`);
-                            const pdfUrl = await this.extractPdfUrl(entry.recordId);
-                            if (pdfUrl) {
-                                entry.pdfUrl = pdfUrl;
-                                console.log(`   └─ Found PDF: ${pdfUrl}`);
-                            } else {
+                            const pdfs = await this.extractPdfUrl(entry.recordId);
+                            if (pdfs.pdfFr) {
+                                entry.pdfUrl = pdfs.pdfFr;
+                                console.log(`   └─ Found PDF (FR): ${pdfs.pdfFr}`);
+                            }
+                            if (pdfs.pdfAr) {
+                                entry.pdfUrlAr = pdfs.pdfAr;
+                                console.log(`   └─ Found PDF (AR): ${pdfs.pdfAr}`);
+                            }
+
+                            if (!pdfs.pdfFr && !pdfs.pdfAr) {
                                 console.log(`   └─ No PDF found.`);
                             }
 
@@ -96,9 +104,11 @@ export class JortScraper {
                                 titleFr: entry.titleFr,
                                 titleAr: entry.titleAr,
                                 ministry: entry.ministry,
+                                ministryAr: entry.ministryAr,
                                 type: entry.type,
                                 date: entry.date,
                                 pdfUrl: entry.pdfUrl,
+                                pdfUrlAr: entry.pdfUrlAr,
                                 recordId: entry.recordId,
                             });
                             stats.new++;
@@ -172,9 +182,9 @@ export class JortScraper {
     }
 
     /**
-     * Extract PDF URL from record detail page
+     * Extract PDF URL from record detail page (FR and AR)
      */
-    private async extractPdfUrl(recordId: string): Promise<string | undefined> {
+    private async extractPdfUrl(recordId: string): Promise<{ pdfFr: string | null, pdfAr: string | null }> {
         try {
             const detailUrl = `${this.config.baseUrl}/record/${recordId}?ln=fr`;
             const response = await axios.get(detailUrl, {
@@ -185,31 +195,41 @@ export class JortScraper {
             });
 
             const html = response.data;
+            const pdfFrPattern = /href="([^"]*\/jort\/[^"]*\/(?:Jo|Ja)[^"]*\.pdf)"/i;
+            const pdfArPattern = /href="([^"]*\/jort\/[^"]*\/(?:Ja|Jo)[^"]*\.pdf)"/i; // Often Ja is Arabic, need to be careful
 
-            // Look for patterns like: /jort/2026/2026F/Jo0142026.pdf
-            // Regex to find JORT PDF links. Matches Jo (Journal Officiel) or Ja (Journal Arab?)
-            const frenchPdfPattern = /href="([^"]*\/jort\/[^"]*\/(?:Jo|Ja)[^"]*\.pdf)"/i;
-            let match = html.match(frenchPdfPattern);
+            // Better strategy: capture all PDF links and try to classify
+            const allPdfMatches = [...html.matchAll(/href="([^"]+\.pdf)"/g)];
 
-            if (!match) {
-                // Fallback to any JORT PDF link if French specific not found
-                const anyPdfPattern = /href="([^"]*\/jort\/[^"]*\.pdf)"/i;
-                match = html.match(anyPdfPattern);
-            }
+            let pdfFr: string | null = null;
+            let pdfAr: string | null = null;
 
-            if (match && match[1]) {
-                const relativeUrl = match[1];
-                // Ensure full URL
-                if (relativeUrl.startsWith('http')) {
-                    return relativeUrl;
+            for (const match of allPdfMatches) {
+                let url = match[1];
+                if (!url.startsWith('http')) {
+                    url = `${this.config.baseUrl}${url.startsWith('/') ? '' : '/'}${url}`;
                 }
-                return `${this.config.baseUrl}${relativeUrl.startsWith('/') ? '' : '/'}${relativeUrl}`;
+
+                if (url.includes('/Jo') || url.toLowerCase().includes('fr')) {
+                    pdfFr = url;
+                } else if (url.includes('/Ja') || url.toLowerCase().includes('ar')) {
+                    pdfAr = url;
+                }
             }
 
-            return undefined;
+            // Fallback: if only one found and unsure, assign to Fr (default)
+            if (!pdfFr && !pdfAr && allPdfMatches.length > 0) {
+                let url = allPdfMatches[0][1];
+                if (!url.startsWith('http')) {
+                    url = `${this.config.baseUrl}${url.startsWith('/') ? '' : '/'}${url}`;
+                }
+                pdfFr = url;
+            }
+
+            return { pdfFr, pdfAr };
         } catch (error: any) {
             console.warn(`⚠️  Failed to extract PDF for record ${recordId}: ${error.message}`);
-            return undefined;
+            return { pdfFr: null, pdfAr: null };
         }
     }
 
