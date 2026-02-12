@@ -118,5 +118,121 @@ export const emailTemplates = {
     </div>
 </body>
 </html>`;
+    },
+
+    obligationDetail: (data: any, lang: string = 'fr') => {
+        const isAr = lang === 'ar';
+        const dir = isAr ? 'rtl' : 'ltr';
+        const align = isAr ? 'right' : 'left';
+
+        const labels = {
+            title: isAr ? 'تفاصيل الالتزام' : "Détail de l'Obligation",
+            descFallback: isAr ? 'لا يوجد وصف متاح.' : 'Aucune description disponible.',
+            regulation: isAr ? 'النص القانونی:' : 'Texte Réglementaire:',
+            frequency: isAr ? 'التواتر:' : 'Fréquence:',
+            nextDeadline: isAr ? 'الموعد القادم:' : 'Prochaine échéance:',
+            viewApp: isAr ? 'عرض في التطبيق' : "Voir dans l'application",
+            na: isAr ? 'غير متاح' : 'N/A'
+        };
+
+        const title = isAr ? (data.titleAr || data.titleFr) : data.titleFr;
+        const description = isAr ? (data.descriptionAr || data.descriptionFr) : data.descriptionFr;
+        const regulationTitle = isAr ? (data.regulation?.titleAr || data.regulation?.titleFr) : data.regulation?.titleFr;
+
+        // Frequencies translation map
+        const freqMap: Record<string, string> = {
+            'MONTHLY': isAr ? 'شهري' : 'Mensuel',
+            'QUARTERLY': isAr ? 'ربع سنوي' : 'Trimestriel',
+            'ANNUAL': isAr ? 'سنوي' : 'Annuel',
+            'BIENNIAL': isAr ? 'كل سنتين' : 'Biennal',
+            'TRIENNIAL': isAr ? 'كل ثلاث سنوات' : 'Triennal',
+            'CONTINUOUS': isAr ? 'دائم' : 'Continu',
+        };
+        const frequency = freqMap[data.frequency] || data.frequency || labels.na;
+
+        return `
+<!DOCTYPE html>
+<html lang="${lang}" dir="${dir}">
+<body style="font-family: sans-serif; color: #333; direction: ${dir}; text-align: ${align};">
+    <div style="max-width: 600px; margin: 0 auto; border: 1px solid #e5e7eb; border-radius: 8px;">
+        <div style="background-color: #3b82f6; color: white; padding: 20px; text-align: center;">
+            <h2 style="margin:0;">${labels.title}</h2>
+            <p style="margin:5px 0 0;">${title}</p>
+        </div>
+        <div style="padding: 20px;">
+            
+            <p style="color: #555; font-style: italic;">${description || labels.descFallback}</p>
+
+            <div style="margin-top: 20px; border-top: 1px solid #eee; padding-top: 15px;">
+                <p><strong>${labels.regulation}</strong> ${regulationTitle || labels.na}</p>
+                <p><strong>${labels.frequency}</strong> ${frequency}</p>
+                ${data.nextDeadline ? `<p><strong>${labels.nextDeadline}</strong> ${new Date(data.nextDeadline).toLocaleDateString(isAr ? 'ar-TN' : 'fr-FR')}</p>` : ''}
+            </div>
+
+            <div style="text-align: center; margin-top: 30px;">
+                <a href="${process.env.APP_URL || 'http://localhost:5173'}/obligations" style="display: inline-block; background-color: #3b82f6; color: white; text-decoration: none; padding: 10px 20px; border-radius: 6px;">
+                    ${labels.viewApp}
+                </a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>`;
+    },
+
+    deadlineDetail: (data: any, lang: string = 'fr') => {
+        const isAr = lang === 'ar';
+        const dir = isAr ? 'rtl' : 'ltr';
+        const align = isAr ? 'right' : 'left';
+
+        const statusMap: Record<string, { color: string, text: string }> = {
+            'COMPLETED': {
+                color: '#16a34a',
+                text: isAr ? 'مكتمل' : 'COMPLÉTÉ'
+            },
+            'OVERDUE': {
+                color: '#dc2626',
+                text: isAr ? 'متأخر' : 'EN RETARD'
+            },
+            'PENDING': {
+                color: '#f59e0b',
+                text: isAr ? 'معلق' : 'EN ATTENTE'
+            }
+        };
+
+        const statusInfo = statusMap[data.status] || statusMap['PENDING'];
+
+        const labels = {
+            header: isAr ? 'تذكير بالموع!' : "Rappel d'Échéance",
+            defaultTitle: isAr ? 'تفاصيل الموعد' : "Détail de l'échéance",
+            dueDate: isAr ? 'تاريخ الاستحقاق:' : "Date d'échéance:",
+            manage: isAr ? 'إدارة الموعد' : "Gérer l'échéance"
+        };
+
+        const title = isAr ? (data.obligation?.titleAr || data.obligation?.titleFr) : data.obligation?.titleFr;
+
+        return `
+<!DOCTYPE html>
+<html lang="${lang}" dir="${dir}">
+<body style="font-family: sans-serif; color: #333; direction: ${dir}; text-align: ${align};">
+    <div style="max-width: 600px; margin: 0 auto; border: 1px solid #e5e7eb; border-radius: 8px;">
+        <div style="background-color: ${statusInfo.color}; color: white; padding: 20px; text-align: center;">
+            <h2 style="margin:0;">${labels.header}</h2>
+            <p style="margin:5px 0 0;">${statusInfo.text}</p>
+        </div>
+        <div style="padding: 20px;">
+            <h3 style="color: #374151;">${title || labels.defaultTitle}</h3>
+            
+            <p><strong>${labels.dueDate}</strong> ${new Date(data.dueDate).toLocaleDateString(isAr ? 'ar-TN' : 'fr-FR')}</p>
+            
+            <div style="text-align: center; margin-top: 30px;">
+                <a href="${process.env.APP_URL || 'http://localhost:5173'}/deadlines" style="display: inline-block; background-color: #3b82f6; color: white; text-decoration: none; padding: 10px 20px; border-radius: 6px;">
+                    ${labels.manage}
+                </a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>`;
     }
 };

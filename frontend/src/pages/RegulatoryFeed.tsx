@@ -186,7 +186,7 @@ export default function RegulatoryFeed() {
                                             target="_blank"
                                             rel="noopener noreferrer"
                                             className="btn btn-secondary btn-sm"
-                                            title="Télécharger le PDF officiel"
+                                            title={t('regulatory.downloadPdf') || 'Télécharger le PDF officiel'}
                                             style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: '#dc2626', borderColor: '#fee2e2', background: '#fef2f2' }}
                                         >
                                             <FileText size={16} />
@@ -198,7 +198,7 @@ export default function RegulatoryFeed() {
                                             target="_blank"
                                             rel="noopener noreferrer"
                                             className="btn btn-secondary btn-sm"
-                                            title="Voir sur PIST.tn"
+                                            title={t('regulatory.viewOnPist') || 'Voir sur PIST.tn'}
                                             style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}
                                         >
                                             <ExternalLink size={16} />
@@ -207,7 +207,7 @@ export default function RegulatoryFeed() {
                                     ) : (
                                         <span
                                             className="btn btn-secondary btn-sm disabled"
-                                            title="Lien non disponible"
+                                            title={t('regulatory.linkUnavailable') || 'Lien non disponible'}
                                             style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', opacity: 0.5, cursor: 'not-allowed' }}
                                         >
                                             <ExternalLink size={16} />

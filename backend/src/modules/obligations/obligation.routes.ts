@@ -252,4 +252,31 @@ export async function obligationRoutes(app: FastifyInstance) {
             throw error;
         }
     });
+    // ========== EMAIL OBLIGATION ==========
+    // POST /obligations/:id/email
+    app.post<{ Params: { id: string }, Body: { email?: string, lang?: string } }>('/obligations/:id/email', { preHandler: [app.authenticate] }, async (request, reply) => {
+        try {
+            const user = request.user;
+            const { id } = request.params;
+            const targetEmail = request.body?.email || user.email;
+            const lang = request.body?.lang || 'fr';
+
+            console.log(`[DEBUG] Attempting to email obligation ${id} to ${targetEmail} (User: ${user.email}, Lang: ${lang})`);
+
+            await obligationService.emailObligation(id, user.companyId, targetEmail, lang);
+
+            return reply.send({
+                success: true,
+                message: 'Email envoyé avec succès'
+            });
+        } catch (error: any) {
+            if (error.message === 'OBLIGATION_NOT_FOUND') {
+                return reply.status(404).send({
+                    success: false,
+                    error: { code: 'OBLIGATION_NOT_FOUND', message: 'Obligation introuvable' },
+                });
+            }
+            throw error;
+        }
+    });
 }

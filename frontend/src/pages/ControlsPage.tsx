@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Plus, Pencil, Trash2, ClipboardCheck } from 'lucide-react';
+import { useSearchParams } from 'react-router-dom';
+import { Plus, Pencil, Trash2, ClipboardCheck, X, Search } from 'lucide-react';
 import { useApi } from '../hooks/useApi';
 import Modal from '../components/Modal';
 import ControlForm from '../components/ControlForm';
@@ -26,8 +27,18 @@ export default function ControlsPage() {
     const { t, i18n } = useTranslation();
     const api = useApi();
 
+    const [searchParams] = useSearchParams();
+    const initialId = searchParams.get('id');
+
     const [controls, setControls] = useState<Control[]>([]);
     const [loading, setLoading] = useState(true);
+
+    // Filter state
+    const [filterTitle, setFilterTitle] = useState('');
+    const [filterStatus, setFilterStatus] = useState('');
+    const [filterType, setFilterType] = useState('');
+    const [filterFrequency, setFilterFrequency] = useState('');
+    const [filterId, setFilterId] = useState<string | null>(initialId);
 
     // Modal state
     const [showModal, setShowModal] = useState(false);
@@ -47,6 +58,41 @@ export default function ControlsPage() {
     useEffect(() => {
         fetchControls();
     }, []);
+
+    const filteredControls = controls.filter(ctrl => {
+        // Filter by ID (highlight)
+        if (filterId && ctrl.id !== filterId) return false;
+
+        // Filter by Title (Fr or Ar)
+        if (filterTitle) {
+            const titleFr = ctrl.titleFr?.toLowerCase() || '';
+            const titleAr = ctrl.titleAr?.toLowerCase() || '';
+            const search = filterTitle.toLowerCase();
+            if (!titleFr.includes(search) && !titleAr.includes(search)) return false;
+        }
+
+        // Filter by Status
+        if (filterStatus) {
+            const latestStatus = ctrl.checks && ctrl.checks.length > 0 ? ctrl.checks[0].status : 'PENDING';
+            if (latestStatus !== filterStatus) return false;
+        }
+
+        // Filter by Type
+        if (filterType && ctrl.controlType !== filterType) return false;
+
+        // Filter by Frequency
+        if (filterFrequency && ctrl.frequency !== filterFrequency) return false;
+
+        return true;
+    });
+
+    const clearFilters = () => {
+        setFilterId(null);
+        setFilterTitle('');
+        setFilterStatus('');
+        setFilterType('');
+        setFilterFrequency('');
+    };
 
     const handleAdd = () => {
         setEditingControl(null);
@@ -86,9 +132,83 @@ export default function ControlsPage() {
                 </button>
             </div>
 
+            {/* Filters */}
+            <div className="card" style={{ marginBottom: '1rem', padding: '1rem' }}>
+                <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flex: 1, minWidth: '200px' }}>
+                        <Search size={18} className="text-secondary" />
+                        <input
+                            type="text"
+                            placeholder={t('common.search') + '...'}
+                            className="form-control"
+                            value={filterTitle}
+                            onChange={(e) => setFilterTitle(e.target.value)}
+                            style={{ margin: 0 }}
+                        />
+                    </div>
+
+                    <select
+                        className="form-control"
+                        value={filterStatus}
+                        onChange={(e) => setFilterStatus(e.target.value)}
+                        style={{ width: 'auto', margin: 0 }}
+                    >
+                        <option value="">{t('common.status')} {t('common.all')}</option>
+                        <option value="PASS">{t('checkStatus.PASS')}</option>
+                        <option value="FAIL">{t('checkStatus.FAIL')}</option>
+                        <option value="PARTIAL">{t('checkStatus.PARTIAL')}</option>
+                        <option value="PENDING">{t('checkStatus.PENDING')}</option>
+                    </select>
+
+                    <select
+                        className="form-control"
+                        value={filterType}
+                        onChange={(e) => setFilterType(e.target.value)}
+                        style={{ width: 'auto', margin: 0 }}
+                    >
+                        <option value="">{t('controls.type')} {t('common.all')}</option>
+                        <option value="DOCUMENT">{t('controlType.DOCUMENT')}</option>
+                        <option value="INSPECTION">{t('controlType.INSPECTION')}</option>
+                        <option value="TRAINING">{t('controlType.TRAINING')}</option>
+                        <option value="CERTIFICATION">{t('controlType.CERTIFICATION')}</option>
+                    </select>
+
+                    <select
+                        className="form-control"
+                        value={filterFrequency}
+                        onChange={(e) => setFilterFrequency(e.target.value)}
+                        style={{ width: 'auto', margin: 0 }}
+                    >
+                        <option value="">{t('obligations.frequency')} {t('common.all')}</option>
+                        <option value="MONTHLY">{t('frequency.MONTHLY')}</option>
+                        <option value="QUARTERLY">{t('frequency.QUARTERLY')}</option>
+                        <option value="ANNUAL">{t('frequency.ANNUAL')}</option>
+                        <option value="CONTINUOUS">{t('frequency.CONTINUOUS')}</option>
+                    </select>
+
+                    {(filterId || filterTitle || filterStatus || filterType || filterFrequency) && (
+                        <button className="btn btn-secondary" onClick={clearFilters} title={t('common.clear')}>
+                            <X size={16} />
+                            {t('common.clear')}
+                        </button>
+                    )}
+                </div>
+
+                {filterId && (
+                    <div style={{ marginTop: '0.75rem', padding: '0.5rem', background: 'var(--info-bg, #e0f2fe)', borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <span style={{ fontSize: '0.9rem', color: 'var(--info-text, #0369a1)' }}>
+                            {t('controls.filteredById')}
+                        </span>
+                        <button className="btn-icon" onClick={() => setFilterId(null)} style={{ width: 24, height: 24 }}>
+                            <X size={14} />
+                        </button>
+                    </div>
+                )}
+            </div>
+
             {/* Table */}
             <div className="card">
-                {controls.length === 0 ? (
+                {filteredControls.length === 0 ? (
                     <div className="empty-state">
                         <p>{t('controls.noData')}</p>
                         <p style={{ fontSize: '0.875rem', marginTop: '0.5rem' }}>{t('controls.noDataHint')}</p>
@@ -107,7 +227,7 @@ export default function ControlsPage() {
                                 </tr>
                             </thead>
                             <tbody>
-                                {controls.map(ctrl => (
+                                {filteredControls.map(ctrl => (
                                     <tr key={ctrl.id}>
                                         <td>
                                             <strong>{i18n.language === 'ar' && ctrl.titleAr ? ctrl.titleAr : ctrl.titleFr}</strong>

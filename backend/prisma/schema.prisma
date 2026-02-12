@@ -165,7 +165,25 @@ model Check {
   evidence  Evidence[]
   alerts    Alert[]
 
+  actions   ActionItem[]
   @@map("checks")
+}
+
+model ActionItem {
+  id          String   @id @default(uuid())
+  checkId     String   @map("check_id")
+  description String   @db.Text
+  priority    String   @default("MEDIUM") // LOW, MEDIUM, HIGH, CRITICAL
+  status      String   @default("PENDING") // PENDING, IN_PROGRESS, COMPLETED
+  dueDate     DateTime? @map("due_date")
+  assignedTo  String?  @map("assigned_to") // User ID
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  check Check @relation(fields: [checkId], references: [id], onDelete: Cascade)
+
+  @@map("action_items")
 }
 
 model Evidence {

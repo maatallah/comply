@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Plus, Pencil, Trash2, Check } from 'lucide-react';
+import { Plus, Pencil, Trash2, Check, Mail } from 'lucide-react';
 import { useApi } from '../hooks/useApi';
 import Modal from '../components/Modal';
+import ConfirmModal from '../components/ConfirmModal';
 import DeadlineForm from '../components/DeadlineForm';
+import { useToast } from '../context/ToastContext';
 
 interface Deadline {
     id: string;
@@ -17,9 +19,12 @@ interface Deadline {
     };
 }
 
+import { useAuth } from '../context/AuthContext';
+
 export default function DeadlinesPage() {
     const { t, i18n } = useTranslation();
     const api = useApi();
+    const { user } = useAuth();
 
     const [deadlines, setDeadlines] = useState<Deadline[]>([]);
     const [loading, setLoading] = useState(true);
@@ -29,6 +34,18 @@ export default function DeadlinesPage() {
     const [editingDeadline, setEditingDeadline] = useState<Deadline | null>(null);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
     const [showCompleteConfirm, setShowCompleteConfirm] = useState<Deadline | null>(null);
+    const [showEmailConfirm, setShowEmailConfirm] = useState<string | null>(null);
+
+    const { success, error } = useToast();
+
+    const handleEmail = async (id: string) => {
+        const result = await api.emailDeadline(id, user?.email || '', i18n.language);
+        if (result.success) {
+            success(t('common.emailSent') || 'Email envoyé avec succès');
+        } else {
+            error(t('common.error') || 'Une erreur est survenue');
+        }
+    };
 
     const fetchDeadlines = async () => {
         setLoading(true);
@@ -173,6 +190,9 @@ export default function DeadlinesPage() {
                                                         ↺
                                                     </button>
                                                 )}
+                                                <button className="btn-icon" onClick={() => setShowEmailConfirm(dl.id)} title={t('common.email') || 'Envoyer par email'}>
+                                                    <Mail size={16} />
+                                                </button>
                                                 <button className="btn-icon" onClick={() => handleEdit(dl)} title={t('common.edit')}>
                                                     <Pencil size={16} />
                                                 </button>
@@ -242,6 +262,16 @@ export default function DeadlinesPage() {
                     </button>
                 </div>
             </Modal>
+
+            {/* Email Confirmation Modal */}
+            <ConfirmModal
+                isOpen={!!showEmailConfirm}
+                onClose={() => setShowEmailConfirm(null)}
+                onConfirm={() => showEmailConfirm && handleEmail(showEmailConfirm)}
+                title={t('common.confirmEmailTitle') || 'Confirmer l\'envoi'}
+                message={t('common.confirmEmail') || 'Envoyer le rapport par email ?'}
+                confirmLabel={t('common.send') || 'Envoyer'}
+            />
         </div>
     );
 }

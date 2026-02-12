@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useApi } from '../hooks/useApi';
+import { useToast } from '../context/ToastContext';
 import { useSearchParams, Link } from 'react-router-dom';
-import { AlertCircle, CheckCircle2, ExternalLink, FileText, Eye } from 'lucide-react';
+import { AlertCircle, CheckCircle2, ExternalLink, FileText, Eye, Clock } from 'lucide-react';
 
 interface Check {
     id: string;
@@ -20,6 +21,12 @@ interface Check {
         id: string;
         fileName: string;
         fileType: string;
+    }[];
+    actions?: {
+        id: string;
+        description: string;
+        status: string;
+        priority: string;
     }[];
 }
 
@@ -44,15 +51,17 @@ export default function ActionPlansPage() {
         setLoading(false);
     };
 
+    const { success, error } = useToast();
+
     const handleEmail = async (id: string) => {
         setEmailing(id);
         const result = await api.emailCheck(id);
         setEmailing(null);
 
         if (result.success) {
-            alert(t('common.emailSent') || 'Email envoyé avec succès');
+            success(t('common.emailSent') || 'Email envoyé avec succès');
         } else {
-            alert(t('common.error') || 'Une erreur est survenue');
+            error(t('common.error') || 'Une erreur est survenue');
         }
     };
 
@@ -117,9 +126,34 @@ export default function ActionPlansPage() {
                                     <h4 style={{ fontSize: '0.9rem', fontWeight: 600, marginBottom: '0.5rem' }}>
                                         {t('checks.correctiveActions') || 'Actions Correctives'}
                                     </h4>
-                                    <p style={{ fontSize: '0.95rem', color: 'var(--gray-700)' }}>
-                                        {plan.correctiveActions || t('checks.noActionsDefined') || 'Aucune action définie'}
-                                    </p>
+
+                                    {plan.actions && plan.actions.length > 0 ? (
+                                        <div style={{ display: 'grid', gap: '0.5rem' }}>
+                                            {plan.actions.map((action: any) => (
+                                                <div key={action.id} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.5rem', background: '#fff', border: '1px solid var(--gray-200)', borderRadius: 'var(--radius)' }}>
+                                                    {action.status === 'COMPLETED' ? (
+                                                        <CheckCircle2 size={16} className="text-success" />
+                                                    ) : (
+                                                        <Clock size={16} className="text-secondary" />
+                                                    )}
+                                                    <div style={{ flex: 1 }}>
+                                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                                                            <span style={{ fontSize: '0.9rem', textDecoration: action.status === 'COMPLETED' ? 'line-through' : 'none', color: action.status === 'COMPLETED' ? 'var(--gray-400)' : 'var(--gray-800)' }}>
+                                                                {action.description}
+                                                            </span>
+                                                            <span className={`badge ${action.priority === 'CRITICAL' ? 'danger' : action.priority === 'HIGH' ? 'warning' : 'secondary'}`} style={{ fontSize: '0.7rem', padding: '0.1rem 0.4rem' }}>
+                                                                {action.priority}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <p style={{ fontSize: '0.95rem', color: 'var(--gray-700)' }}>
+                                            {plan.correctiveActions || t('checks.noActionsDefined') || 'Aucune action définie'}
+                                        </p>
+                                    )}
                                 </div>
 
                                 {plan.evidence && plan.evidence.length > 0 && (
@@ -184,11 +218,11 @@ export default function ActionPlansPage() {
                                         className="btn btn-sm btn-outline-primary"
                                         onClick={() => handleEmail(plan.id)}
                                         disabled={emailing === plan.id}
-                                        title="Envoyer le rapport par email"
+                                        title={t('common.sendReport') || 'Envoyer le rapport par email'}
                                     >
                                         {emailing === plan.id ? '...' : (t('common.email') || 'Email')}
                                     </button>
-                                    <Link to="/controls" className="btn btn-sm btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                    <Link to={`/controls?id=${plan.controlId}`} className="btn btn-sm btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                                         <ExternalLink size={14} />
                                         {t('controls.viewControl') || 'Voir le Contrôle'}
                                     </Link>

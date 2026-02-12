@@ -2,6 +2,8 @@ import { evidenceRepository } from './evidence.repository';
 import prisma from '../../shared/prisma';
 import type { Evidence } from '@prisma/client';
 import type { CreateEvidenceInput, ListEvidenceQuery } from './evidence.types';
+import { promises as fs } from 'fs';
+import path from 'path';
 
 // ==================== SERVICE ====================
 
@@ -77,7 +79,16 @@ export class EvidenceService {
             throw new Error('ACCESS_DENIED');
         }
 
-        // TODO: Delete actual file from storage
+        // Delete actual file from storage
+        if (evidence.filePath) {
+            try {
+                await fs.unlink(evidence.filePath);
+            } catch (error) {
+                console.warn(`Failed to delete file for evidence ${id}:`, error);
+                // Continue with record deletion even if file deletion fails
+            }
+        }
+
         await evidenceRepository.delete(id);
     }
 

@@ -17,6 +17,7 @@ import { alertRoutes } from './modules/alerts';
 import { jortRoutes } from './modules/jort/jort.routes';
 import { scoringRoutes } from './modules/scoring';
 import { reportsRoutes } from './modules/reports';
+import { actionItemRoutes } from './modules/action-items/action-item.routes';
 
 // Load environment variables
 dotenv.config();
@@ -144,6 +145,7 @@ const start = async () => {
         await app.register(jortRoutes, { prefix: '/jort-feed' });
         await app.register(scoringRoutes, { prefix: '/scoring' });
         await app.register(reportsRoutes, { prefix: '/reports' });
+        await app.register(actionItemRoutes);
 
         // Start JORT Scheduler
         const { startJortScheduler } = require('./modules/jort/jort.scheduler');

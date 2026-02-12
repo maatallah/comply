@@ -2,6 +2,8 @@ import { deadlineRepository } from './deadline.repository';
 import prisma from '../../shared/prisma';
 import type { Deadline } from '@prisma/client';
 import type { CreateDeadlineInput, UpdateDeadlineInput, ListDeadlinesQuery } from './deadline.types';
+import { emailService } from '../../shared/email/email.service';
+import { emailTemplates } from '../../shared/email/email.templates';
 
 // ==================== SERVICE ====================
 
@@ -179,6 +181,32 @@ export class DeadlineService {
         overdue: number;
     }> {
         return deadlineRepository.getUpcomingCount(companyId);
+    }
+    async emailDeadline(id: string, companyId: string, targetEmail: string, lang: string = 'fr') {
+        // Need to include obligation title in the fetched deadline for the template
+        const deadline = await prisma.deadline.findUnique({
+            where: { id },
+            include: { obligation: { select: { titleFr: true, titleAr: true } } }
+        });
+
+        if (!deadline) throw new Error('DEADLINE_NOT_FOUND');
+        if (deadline.companyId !== companyId) throw new Error('ACCESS_DENIED');
+
+        const html = emailTemplates.deadlineDetail(deadline, lang);
+
+        const obligationTitle = lang === 'ar'
+            ? (deadline.obligation.titleAr || deadline.obligation.titleFr)
+            : deadline.obligation.titleFr;
+
+        const subject = lang === 'ar'
+            ? `تذكير الموعد: ${obligationTitle}`
+            : `Rappel Échéance: ${obligationTitle}`;
+
+        return emailService.sendEmail({
+            to: targetEmail,
+            subject,
+            html
+        });
     }
 }
 

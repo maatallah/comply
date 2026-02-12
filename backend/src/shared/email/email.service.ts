@@ -29,6 +29,9 @@ export class EmailService {
                 host: process.env.SMTP_HOST,
                 port: Number(process.env.SMTP_PORT) || 587,
                 secure: process.env.SMTP_SECURE === 'true', // true for 465, false for other ports
+                pool: true, // Use connection pooling
+                maxConnections: 5,
+                maxMessages: 100,
                 auth: {
                     user: process.env.SMTP_USER,
                     pass: process.env.SMTP_PASS,
@@ -49,7 +52,7 @@ export class EmailService {
 
         try {
             const info = await this.transporter.sendMail({
-                from: options.from || process.env.SMTP_FROM || '"Comply" <noreply@comply.tn>',
+                from: options.from || process.env.SMTP_FROM || process.env.EMAIL_FROM || '"Comply" <noreply@comply.tn>',
                 to: options.to,
                 subject: options.subject,
                 text: options.text || options.html.replace(/<[^>]*>?/gm, ''), // Simple text fallback

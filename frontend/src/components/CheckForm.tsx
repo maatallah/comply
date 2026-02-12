@@ -2,7 +2,10 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useApi } from '../hooks/useApi';
 import EvidenceUpload from './EvidenceUpload';
-import { FileText, Trash2, Eye, X } from 'lucide-react';
+import ActionItemList from './ActionItemList';
+import CheckHistory from './CheckHistory';
+import ConfirmModal from './ConfirmModal';
+import { FileText, Trash2, Eye, X, Save } from 'lucide-react';
 
 interface CheckFormProps {
     controlId: string;
@@ -22,17 +25,36 @@ export default function CheckForm({ controlId, initialData, onSave, onCancel }: 
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [evidenceList, setEvidenceList] = useState<any[]>(initialData?.evidence || []);
+    const [actionItems, setActionItems] = useState<any[]>(initialData?.actions || []);
+
+    const refreshActions = async () => {
+        if (initialData?.id) {
+            const result = await api.getActionItems(initialData.id);
+            if (result.success) {
+                setActionItems(result.data);
+            }
+        }
+    };
 
 
     const handleEvidenceSuccess = (evidence: any) => {
         setEvidenceList([...evidenceList, evidence]);
     };
 
-    const handleRemoveEvidence = async (id: string, index: number) => {
-        const result = await api.deleteEvidence(id);
+    const [confirmDeleteEvidenceId, setConfirmDeleteEvidenceId] = useState<string | null>(null);
+
+    const handleRemoveEvidence = (id: string) => {
+        setConfirmDeleteEvidenceId(id);
+    };
+
+    const confirmRemoveEvidence = async () => {
+        if (!confirmDeleteEvidenceId) return;
+
+        const result = await api.deleteEvidence(confirmDeleteEvidenceId);
         if (result.success) {
-            setEvidenceList(evidenceList.filter((_, i) => i !== index));
+            setEvidenceList(evidenceList.filter(e => e.id !== confirmDeleteEvidenceId));
         }
+        setConfirmDeleteEvidenceId(null);
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -104,21 +126,32 @@ export default function CheckForm({ controlId, initialData, onSave, onCancel }: 
 
             {(status === 'FAIL' || status === 'PARTIAL') && (
                 <div className="form-group action-plan-box" style={{ background: '#fff1f1', padding: '1rem', borderRadius: 'var(--radius)', border: '1px solid #fee2e2' }}>
-                    <label className="form-label" style={{ color: '#991b1b', fontWeight: 600 }}>
-                        {t('checks.correctiveActions')} <span style={{ color: '#b91c1c', fontWeight: 400, fontSize: '0.875rem' }}>/ الإجراءات التصحيحية</span>
-                    </label>
-                    <textarea
-                        className="form-control"
-                        rows={3}
-                        value={correctiveActions}
-                        onChange={(e) => setCorrectiveActions(e.target.value)}
-                        placeholder={t('checks.actionsPlaceholder')}
-                        required
-                        dir="auto"
-                    />
-                    <p style={{ fontSize: '0.75rem', color: '#b91c1c', marginTop: '0.5rem' }}>
-                        {t('checks.actionPlanHint')}
-                    </p>
+                    {initialData?.id ? (
+                        <ActionItemList
+                            checkId={initialData.id}
+                            items={actionItems}
+                            onItemsChange={refreshActions}
+                        />
+                    ) : (
+                        <div className="text-sm text-amber-800 bg-amber-50 p-3 rounded border border-amber-200 flex items-center gap-2">
+                            <Save size={16} />
+                            {t('checks.saveToAddActions') || "Veuillez enregistrer la vérification pour ajouter des actions détaillées."}
+                        </div>
+                    )}
+
+                    {/* Legacy Corrective Actions fallback - hidden if empty */}
+                    {correctiveActions && actionItems.length === 0 && (
+                        <div className="mt-4 pt-4 border-t border-red-100 opacity-75">
+                            <label className="form-label text-xs text-gray-500">Note globale (Legacy)</label>
+                            <textarea
+                                className="form-control text-sm"
+                                rows={2}
+                                value={correctiveActions}
+                                onChange={(e) => setCorrectiveActions(e.target.value)}
+                                disabled={actionItems.length > 0}
+                            />
+                        </div>
+                    )}
                 </div>
             )}
 
@@ -213,6 +246,16 @@ export default function CheckForm({ controlId, initialData, onSave, onCancel }: 
             </div>
 
 
+            <CheckHistory controlId={controlId} currentCheckId={initialData?.id} />
+            <ConfirmModal
+                isOpen={!!confirmDeleteEvidenceId}
+                onClose={() => setConfirmDeleteEvidenceId(null)}
+                onConfirm={confirmRemoveEvidence}
+                title={t('common.delete') || 'Supprimer'}
+                message={t('messages.deleteConfirm') || 'Êtes-vous sûr de vouloir supprimer cet élément ?'}
+                confirmLabel={t('common.delete') || 'Supprimer'}
+                isDanger={true}
+            />
         </form>
     );
 }

@@ -155,7 +155,7 @@ export default function RegulationsPage() {
                                         {isAdmin && (
                                             <td>
                                                 <div className="table-actions">
-                                                    <button className="btn-icon" onClick={() => navigate(`/regulations/${reg.id}`)} title="Voir détails">
+                                                    <button className="btn-icon" onClick={() => navigate(`/regulations/${reg.id}`)} title={t('common.viewDetails') || 'Voir détails'}>
                                                         <Eye size={16} />
                                                     </button>
                                                     <button className="btn-icon" onClick={() => handleEdit(reg)} title={t('common.edit')}>

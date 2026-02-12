@@ -24,6 +24,7 @@ export class CheckRepository {
                     select: { id: true, titleFr: true },
                 },
                 evidence: true,
+                actions: { orderBy: { createdAt: 'desc' } },
             },
         });
     }
@@ -37,6 +38,7 @@ export class CheckRepository {
                     select: { id: true, titleFr: true, companyId: true },
                 },
                 evidence: true,
+                actions: { orderBy: { createdAt: 'desc' } },
             },
         });
     }
@@ -78,6 +80,9 @@ export class CheckRepository {
                     evidence: {
                         select: { id: true, fileName: true, fileType: true },
                     },
+                    actions: {
+                        orderBy: { createdAt: 'desc' },
+                    },
                 },
             }),
             prisma.check.count({ where }),
@@ -88,12 +93,13 @@ export class CheckRepository {
 
     // Update
     async update(id: string, data: UpdateCheckInput): Promise<Check> {
+        const { checkDate, nextCheckDate, ...rest } = data;
         return prisma.check.update({
             where: { id },
             data: {
-                ...data,
-                checkDate: data.checkDate ? new Date(data.checkDate) : undefined,
-                nextCheckDue: data.nextCheckDate ? new Date(data.nextCheckDate) : undefined,
+                ...rest,
+                checkDate: checkDate ? new Date(checkDate) : undefined,
+                nextCheckDue: nextCheckDate ? new Date(nextCheckDate) : undefined,
             },
             include: {
                 control: {
@@ -118,6 +124,7 @@ export class CheckRepository {
             orderBy: { checkDate: 'desc' },
             include: {
                 evidence: true,
+                actions: { orderBy: { createdAt: 'desc' } },
             },
         });
     }

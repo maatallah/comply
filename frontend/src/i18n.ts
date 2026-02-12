@@ -84,6 +84,7 @@ const fr = {
             noData: 'Aucun contrôle défini',
             noDataHint: 'Les contrôles seront ajoutés pour vos obligations',
             viewControl: 'Voir le Contrôle',
+            filteredById: 'ℹ️ Listing filtré pour un contrôle spécifique',
         },
         // Deadlines
         deadlines: {
@@ -163,6 +164,12 @@ const fr = {
             selectFirst: 'Sélectionner l\'élément d\'abord',
             email: 'Email',
             emailSent: 'Email envoyé avec succès',
+            confirmEmail: 'Envoyer le rapport par email ?',
+            confirmEmailTitle: 'Confirmer l\'envoi',
+            send: 'Envoyer',
+            all: '(Tout)',
+            sendReport: 'Envoyer le rapport par email',
+            viewDetails: 'Voir les détails',
         },
         // Regulatory
         regulatory: {
@@ -174,6 +181,9 @@ const fr = {
             markRelevant: 'Marquer comme pertinent',
             ignore: 'Ignorer',
             searchPlaceholder: 'Rechercher par titre ou ministère...',
+            downloadPdf: 'Télécharger le PDF officiel',
+            viewOnPist: 'Voir sur PIST.tn',
+            linkUnavailable: 'Lien non disponible',
         },
         // Checks & Action Plans
         checks: {
@@ -191,6 +201,7 @@ const fr = {
             actionsPlaceholder: 'Quelles actions correctives sont nécessaires ?',
             actionPlanHint: 'Une alerte sera générée automatiquement.',
             noActionsDefined: 'Aucune action définie',
+            actionItems: 'Actions à entreprendre',
         },
         checkStatus: {
             PASS: 'Conforme',
@@ -377,6 +388,7 @@ const ar = {
             noData: 'لا توجد ضوابط محددة',
             noDataHint: 'سيتم إضافة الضوابط لالتزاماتك',
             viewControl: 'عرض الضابط',
+            filteredById: 'ℹ️ القائمة مصفاة لعنصر محدد',
         },
         deadlines: {
             title: 'المواعيد النهائية',
@@ -449,6 +461,12 @@ const ar = {
             selectFirst: 'اختر العنصر أولاً',
             email: 'بريد إلكتروني',
             emailSent: 'تم إرسال البريد الإلكتروني بنجاح',
+            confirmEmail: 'هل تود إرسال التقرير عبر البريد الإلكتروني؟',
+            confirmEmailTitle: 'تأكيد الإرسال',
+            send: 'إرسال',
+            all: '(الكل)',
+            sendReport: 'إرسال التقرير عبر البريد الإلكتروني',
+            viewDetails: 'عرض التفاصيل',
         },
         // Regulatory
         regulatory: {
@@ -460,6 +478,9 @@ const ar = {
             markRelevant: 'تحديد كـ ذات صلة',
             ignore: 'تجاهل',
             searchPlaceholder: 'البحث حسب العنوان أو الوزارة...',
+            downloadPdf: 'تحميل PDF الرسمي',
+            viewOnPist: 'عرض على PIST.tn',
+            linkUnavailable: 'الرابط غير متوفر',
         },
         articles: {
             title: 'تقسيم حسب الفصول',
@@ -488,6 +509,7 @@ const ar = {
             actionsPlaceholder: 'ما هي الإجراءات التصحيحية المطلوبة؟',
             actionPlanHint: 'سيتم إنشاء تنبيه تلقائياً.',
             noActionsDefined: 'لم يتم تحديد أي إجراءات',
+            actionItems: 'بنود العمل',
         },
         checkStatus: {
             PASS: 'مطابق',

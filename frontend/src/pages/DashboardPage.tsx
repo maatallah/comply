@@ -34,7 +34,7 @@ interface DeadlineSummary {
     overdue: number;
 }
 
-const CHART_COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
+// const CHART_COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
 
 export default function DashboardPage() {
     const { t } = useTranslation();
@@ -114,13 +114,13 @@ export default function DashboardPage() {
     ].filter(d => d.value > 0) : [];
 
     // Data for BarChart
-    const barData = complianceBreakdown?.categories.map((cat) => ({
-        name: t(`category.${cat.category}`, cat.category),
-        Conforme: cat.passedControls,
-        'Non-conforme': cat.failedControls,
-        Partiel: cat.partialControls,
-        'Non-vérifié': cat.notCheckedControls,
-    })) || [];
+    // const barData = complianceBreakdown?.categories.map((cat) => ({
+    //     name: t(`category.${cat.category}`, cat.category),
+    //     Conforme: cat.passedControls,
+    //     'Non-conforme': cat.failedControls,
+    //     Partiel: cat.partialControls,
+    //     'Non-vérifié': cat.notCheckedControls,
+    // })) || [];
 
     const handleExportPdf = async () => {
         setExporting(true);

@@ -29,7 +29,7 @@ export async function seedUsers() {
     console.log(`   - Company created/found: ${company.legalName}`);
 
     // 2. Create Admin User
-    const email = 'admin@test.tn';
+    const email = 'cpt.systeme@gnet.tn'; // Updated to match SMTP sender for testing
     const password = 'password123';
     const passwordHash = await bcrypt.hash(password, 10);
 

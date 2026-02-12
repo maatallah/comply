@@ -244,4 +244,29 @@ export async function deadlineRoutes(app: FastifyInstance) {
             throw error;
         }
     });
+    // ========== EMAIL DEADLINE ==========
+    // POST /deadlines/:id/email
+    app.post<{ Params: { id: string }, Body: { email?: string, lang?: string } }>('/deadlines/:id/email', { preHandler: [app.authenticate] }, async (request, reply) => {
+        try {
+            const user = request.user;
+            const { id } = request.params;
+            const targetEmail = request.body?.email || user.email;
+            const lang = request.body?.lang || 'fr';
+
+            await deadlineService.emailDeadline(id, user.companyId, targetEmail, lang);
+
+            return reply.send({
+                success: true,
+                message: 'Email envoyé avec succès'
+            });
+        } catch (error: any) {
+            if (error.message === 'DEADLINE_NOT_FOUND') {
+                return reply.status(404).send({
+                    success: false,
+                    error: { code: 'DEADLINE_NOT_FOUND', message: 'Échéance introuvable' },
+                });
+            }
+            throw error;
+        }
+    });
 }

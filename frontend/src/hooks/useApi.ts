@@ -150,6 +150,14 @@ export function useApi() {
             method: 'POST',
             body: JSON.stringify({ email })
         }),
+        emailObligation: (id: string, email?: string, lang?: string) => fetchWithAuth(`/obligations/${id}/email`, {
+            method: 'POST',
+            body: JSON.stringify({ email, lang })
+        }),
+        emailDeadline: (id: string, email?: string, lang?: string) => fetchWithAuth(`/deadlines/${id}/email`, {
+            method: 'POST',
+            body: JSON.stringify({ email, lang })
+        }),
         updateCheck: (id: string, data: any) => fetchWithAuth(`/checks/${id}`, {
             method: 'PUT',
             body: JSON.stringify(data)
@@ -233,5 +241,20 @@ export function useApi() {
 
         // ============ SCORING ============
         getComplianceBreakdown: () => fetchWithAuth('/scoring/breakdown'),
+        // ============ ACTION ITEMS ============
+        getActionItems: (checkId: string) =>
+            fetchWithAuth(`/checks/${checkId}/actions`),
+        createActionItem: (checkId: string, data: any) =>
+            fetchWithAuth(`/checks/${checkId}/actions`, {
+                method: 'POST',
+                body: JSON.stringify(data),
+            }),
+        updateActionItemStatus: (id: string, status: string) =>
+            fetchWithAuth(`/actions/${id}`, {
+                method: 'PUT',
+                body: JSON.stringify({ status }),
+            }),
+        deleteActionItem: (id: string) =>
+            fetchWithAuth(`/actions/${id}`, { method: 'DELETE' }),
     };
 }

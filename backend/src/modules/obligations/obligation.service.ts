@@ -3,6 +3,8 @@ import prisma from '../../shared/prisma';
 import type { Obligation } from '@prisma/client';
 import type { CreateObligationInput, UpdateObligationInput, ListObligationsQuery } from './obligation.types';
 import { OFFSHORE_OBLIGATION_TEMPLATES } from './offshore-templates';
+import { emailService } from '../../shared/email/email.service';
+import { emailTemplates } from '../../shared/email/email.templates';
 
 // ==================== SERVICE ====================
 
@@ -230,6 +232,21 @@ export class ObligationService {
                 isActive: true,
             },
             data: { isActive: false },
+        });
+    }
+    async emailObligation(id: string, companyId: string, targetEmail: string, lang: string = 'fr') {
+        const obligation = await this.getObligationById(id, companyId);
+
+        const html = emailTemplates.obligationDetail(obligation, lang);
+
+        const subject = lang === 'ar'
+            ? `تفاصيل الالتزام: ${obligation.titleAr || obligation.titleFr}`
+            : `Détail Obligation: ${obligation.titleFr}`;
+
+        return emailService.sendEmail({
+            to: targetEmail,
+            subject,
+            html
         });
     }
 }

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useApi } from '../hooks/useApi';
+import { useToast } from '../context/ToastContext';
 import { ClipboardCheck, Filter } from 'lucide-react';
 
 interface Check {
@@ -40,15 +41,17 @@ export default function ChecksPage() {
         setLoading(false);
     };
 
+    const { success, error } = useToast();
+
     const handleEmail = async (id: string) => {
         setEmailing(id);
         const result = await api.emailCheck(id);
         setEmailing(null);
 
         if (result.success) {
-            alert(t('common.emailSent') || 'Email envoyé avec succès');
+            success(t('common.emailSent') || 'Email envoyé avec succès');
         } else {
-            alert(t('common.error') || 'Une erreur est survenue');
+            error(t('common.error') || 'Une erreur est survenue');
         }
     };
 
@@ -78,10 +81,10 @@ export default function ChecksPage() {
                     <div className="filter-group" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                         <Filter size={18} className="text-gray-500" />
                         <select
-                            className="form-select"
+                            className="form-control"
                             value={filter}
                             onChange={(e) => setFilter(e.target.value)}
-                            style={{ padding: '0.4rem 0.8rem', fontSize: '0.875rem' }}
+                            style={{ width: 'auto', margin: 0 }}
                         >
                             <option value="all">{t('common.all')}</option>
                             <option value="PASS">{t('checkStatus.PASS')}</option>
@@ -136,7 +139,7 @@ export default function ChecksPage() {
                                                 onClick={() => handleEmail(check.id)}
                                                 disabled={emailing === check.id}
                                                 style={{ fontSize: '0.75rem', padding: '0.2rem 0.5rem' }}
-                                                title="Envoyer le rapport par email"
+                                                title={t('common.sendReport') || 'Envoyer le rapport par email'}
                                             >
                                                 {emailing === check.id ? '...' : 'Email'}
                                             </button>

@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Plus, Pencil, Trash2 } from 'lucide-react';
+import { Plus, Pencil, Trash2, Mail } from 'lucide-react';
 import { useApi } from '../hooks/useApi';
 import Modal from '../components/Modal';
+import ConfirmModal from '../components/ConfirmModal';
 import ObligationForm from '../components/ObligationForm';
+import { useToast } from '../context/ToastContext';
 
 interface Obligation {
     id: string;
@@ -19,9 +21,12 @@ interface Obligation {
     };
 }
 
+import { useAuth } from '../context/AuthContext';
+
 export default function ObligationsPage() {
     const { t, i18n } = useTranslation();
     const api = useApi();
+    const { user } = useAuth();
 
     const [obligations, setObligations] = useState<Obligation[]>([]);
     const [loading, setLoading] = useState(true);
@@ -31,6 +36,18 @@ export default function ObligationsPage() {
     const [showModal, setShowModal] = useState(false);
     const [editingObligation, setEditingObligation] = useState<Obligation | null>(null);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
+    const [showEmailConfirm, setShowEmailConfirm] = useState<string | null>(null);
+
+    const { success, error } = useToast();
+
+    const handleEmail = async (id: string) => {
+        const result = await api.emailObligation(id, user?.email || '', i18n.language);
+        if (result.success) {
+            success(t('common.emailSent') || 'Email envoyé avec succès');
+        } else {
+            error(t('common.error') || 'Une erreur est survenue');
+        }
+    };
 
     const fetchObligations = async () => {
         setLoading(true);
@@ -154,6 +171,9 @@ export default function ObligationsPage() {
                                         </td>
                                         <td>
                                             <div className="table-actions">
+                                                <button className="btn-icon" onClick={() => setShowEmailConfirm(ob.id)} title={t('common.email') || 'Envoyer par email'}>
+                                                    <Mail size={16} />
+                                                </button>
                                                 <button className="btn-icon" onClick={() => handleEdit(ob)} title={t('common.edit')}>
                                                     <Pencil size={16} />
                                                 </button>
@@ -199,6 +219,16 @@ export default function ObligationsPage() {
                     </button>
                 </div>
             </Modal>
+
+            {/* Email Confirmation Modal */}
+            <ConfirmModal
+                isOpen={!!showEmailConfirm}
+                onClose={() => setShowEmailConfirm(null)}
+                onConfirm={() => showEmailConfirm && handleEmail(showEmailConfirm)}
+                title={t('common.confirmEmailTitle') || 'Confirmer l\'envoi'}
+                message={t('common.confirmEmail') || 'Envoyer le rapport par email ?'}
+                confirmLabel={t('common.send') || 'Envoyer'}
+            />
         </div>
     );
 }
