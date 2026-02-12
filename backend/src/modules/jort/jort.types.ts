@@ -12,11 +12,13 @@ export const CreateJortEntrySchema = z.object({
     titleFr: z.string().min(1),
     titleAr: z.string().optional(),
     ministry: z.string().optional(),
+    ministryAr: z.string().optional(),
     type: z.string().optional(), // Law, Decree, etc.
     jortNumber: z.string().optional(),
     recordId: z.string().optional(),
     date: z.string().datetime().optional(),
     pdfUrl: z.string().url().optional(),
+    pdfUrlAr: z.string().url().optional(),
 });
 
 export const ListJortQuerySchema = z.object({
