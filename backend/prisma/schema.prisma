@@ -281,12 +281,14 @@ model JortEntry {
   id           String   @id @default(uuid())
   titleFr      String   @map("title_fr")
   titleAr      String?  @map("title_ar")
-  ministry     String?  // Ministry or Entity extracted
+  ministry     String?  // Ministry or Entity extracted (French)
+  ministryAr   String?  @map("ministry_ar") // Ministry extracted (Arabic)
   type         String?  // Decree, Law, Order, etc.
   jortNumber   String?  @map("jort_number")
   recordId     String?  @unique @map("record_id") // PIST ID for linking
   date         DateTime?
-  pdfUrl       String?  @map("pdf_url")
+  pdfUrl       String?  @map("pdf_url") // French PDF
+  pdfUrlAr     String?  @map("pdf_url_ar") // Arabic PDF
   status       String   @default("PENDING") // PENDING, RELEVANT, IGNORED
   processed    Boolean  @default(false)
   createdAt    DateTime @default(now()) @map("created_at")
