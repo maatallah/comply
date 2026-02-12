@@ -193,9 +193,9 @@ export default function RegulatoryFeed() {
                                         )}
                                     </div>
                                     <div style={{ display: 'flex', gap: '0.5rem', flexDirection: isAr ? 'row-reverse' : 'row' }}>
-                                        {entry.pdfUrl ? (
+                                        {displayPdfUrl ? (
                                             <a
-                                                href={entry.pdfUrl}
+                                                href={displayPdfUrl}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
                                                 className="btn btn-secondary btn-sm"
