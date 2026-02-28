@@ -19,6 +19,8 @@ export const CreateDeadlineSchema = z.object({
 export const UpdateDeadlineSchema = z.object({
     status: z.enum(['PENDING', 'COMPLETED', 'OVERDUE']).optional(),
     completedAt: z.string().datetime().optional(),
+    dueDate: z.string().datetime().optional(),
+    isRecurring: z.boolean().optional(),
 });
 
 export const ListDeadlinesQuerySchema = z.object({

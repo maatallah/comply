@@ -124,7 +124,7 @@ export default function EvidenceUpload({ controlId, onSuccess }: EvidenceUploadP
     };
 
     return (
-        <div className="evidence-upload-container" style={{ border: '2px dashed var(--gray-200)', borderRadius: 'var(--radius)', padding: '1rem', backgroundColor: '#f9fafb' }}>
+        <div className="evidence-upload-container" style={{ border: '2px dashed var(--border-color)', borderRadius: 'var(--radius)', padding: '1rem', backgroundColor: 'var(--bg-primary)' }}>
             {error && <div className="alert error" style={{ marginBottom: '1rem' }}>{error}</div>}
 
             {mode === 'IDLE' && (
@@ -161,7 +161,7 @@ export default function EvidenceUpload({ controlId, onSuccess }: EvidenceUploadP
             )}
 
             {mode === 'PREVIEW' && file && (
-                <div className="preview-card" style={{ background: 'white', border: '1px solid var(--gray-200)', borderRadius: 'var(--radius)', padding: '1rem' }}>
+                <div className="preview-card" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius)', padding: '1rem' }}>
 
                     {/* File Header */}
                     <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>

@@ -65,6 +65,16 @@ export default function ActionPlansPage() {
         }
     };
 
+    const handleActionStatusChange = async (actionId: string, newStatus: string) => {
+        const result = await api.updateActionItemStatus(actionId, newStatus);
+        if (result.success) {
+            success(t('checks.actionUpdated') || 'Action mise à jour');
+            fetchActionPlans();
+        } else {
+            error(t('common.error') || 'Erreur lors de la mise à jour');
+        }
+    };
+
     useEffect(() => {
         fetchActionPlans();
     }, []);
@@ -108,7 +118,7 @@ export default function ActionPlansPage() {
                                             {i18n.language === 'ar' && plan.control?.titleAr ? plan.control.titleAr : plan.control?.titleFr}
                                         </h3>
                                         <p style={{ fontSize: '0.875rem', color: 'var(--gray-500)', marginBottom: '1rem' }}>
-                                            {t('checks.failedOn') || 'Échec constaté le'} : {new Date(plan.checkDate).toLocaleDateString()}
+                                            {t('checks.failedOn') || 'Échec constaté le'} : {new Date(plan.checkDate).toLocaleDateString('fr-FR')}
                                         </p>
                                     </div>
                                     <span className="badge danger">{t(`checkStatus.${plan.status}`)}</span>
@@ -130,7 +140,7 @@ export default function ActionPlansPage() {
                                     {plan.actions && plan.actions.length > 0 ? (
                                         <div style={{ display: 'grid', gap: '0.5rem' }}>
                                             {plan.actions.map((action: any) => (
-                                                <div key={action.id} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.5rem', background: '#fff', border: '1px solid var(--gray-200)', borderRadius: 'var(--radius)' }}>
+                                                <div key={action.id} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.5rem', background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius)' }}>
                                                     {action.status === 'COMPLETED' ? (
                                                         <CheckCircle2 size={16} className="text-success" />
                                                     ) : (
@@ -143,6 +153,21 @@ export default function ActionPlansPage() {
                                                             </span>
                                                             <span className={`badge ${action.priority === 'CRITICAL' ? 'danger' : action.priority === 'HIGH' ? 'warning' : 'secondary'}`} style={{ fontSize: '0.7rem', padding: '0.1rem 0.4rem' }}>
                                                                 {action.priority}
+                                                            </span>
+                                                        </div>
+                                                        <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem', alignItems: 'center' }}>
+                                                            {action.status === 'PENDING' && (
+                                                                <button className="btn btn-sm btn-outline-primary" style={{ padding: '0.1rem 0.5rem', fontSize: '0.75rem' }} onClick={() => handleActionStatusChange(action.id, 'IN_PROGRESS')}>
+                                                                    {t('status.start') || 'Démarrer'}
+                                                                </button>
+                                                            )}
+                                                            {action.status === 'IN_PROGRESS' && (
+                                                                <button className="btn btn-sm btn-success" style={{ padding: '0.1rem 0.5rem', fontSize: '0.75rem' }} onClick={() => handleActionStatusChange(action.id, 'COMPLETED')}>
+                                                                    {t('status.complete') || 'Terminer'}
+                                                                </button>
+                                                            )}
+                                                            <span className={`badge ${action.status === 'COMPLETED' ? 'success' : action.status === 'IN_PROGRESS' ? 'info' : 'warning'}`} style={{ fontSize: '0.7rem', textTransform: 'uppercase' }}>
+                                                                {t(`status.${action.status}`) || action.status}
                                                             </span>
                                                         </div>
                                                     </div>
@@ -222,7 +247,7 @@ export default function ActionPlansPage() {
                                     >
                                         {emailing === plan.id ? '...' : (t('common.email') || 'Email')}
                                     </button>
-                                    <Link to={`/controls?id=${plan.controlId}`} className="btn btn-sm btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                    <Link to={`/controls?id=${plan.controlId}&from=actions`} className="btn btn-sm btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                                         <ExternalLink size={14} />
                                         {t('controls.viewControl') || 'Voir le Contrôle'}
                                     </Link>

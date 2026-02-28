@@ -23,7 +23,7 @@ interface ControlFormProps {
 }
 
 const CONTROL_TYPES = ['DOCUMENT', 'CERTIFICATION', 'INSPECTION', 'TRAINING', 'DECLARATION', 'AUDIT'];
-const FREQUENCIES = ['CONTINUOUS', 'MONTHLY', 'QUARTERLY', 'ANNUAL', 'BIENNIAL', 'TRIENNIAL'];
+const FREQUENCIES = ['CONTINUOUS', 'MONTHLY', 'QUARTERLY', 'SEMI_ANNUAL', 'ANNUAL', 'BIENNIAL', 'TRIENNIAL'];
 
 export default function ControlForm({ control, obligations: propObligations, preselectedObligationId, onSave, onCancel }: ControlFormProps) {
     const { t } = useTranslation();

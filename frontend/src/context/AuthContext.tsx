@@ -2,7 +2,8 @@ import { createContext, useContext, useState, useEffect, useCallback } from 'rea
 import type { ReactNode } from 'react';
 
 interface User {
-    userId: string;
+    id: string;
+    userId: string; // Keeping for compatibility if used elsewhere
     email: string;
     firstName: string;
     lastName: string;

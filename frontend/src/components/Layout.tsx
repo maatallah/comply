@@ -15,7 +15,8 @@ import {
     ClipboardList,
     Rss,
     Sun,
-    Moon
+    Moon,
+    FileSearch
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useApi } from '../hooks/useApi';
@@ -63,6 +64,7 @@ export default function Layout() {
     const switchLanguage = (lang: string) => {
         i18n.changeLanguage(lang);
         document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+        document.documentElement.lang = lang;
     };
 
     const toggleTheme = () => {
@@ -76,6 +78,9 @@ export default function Layout() {
         if (theme !== 'auto') {
             document.documentElement.setAttribute('data-theme', theme);
         }
+        // Sync lang + dir on mount in case saved language differs from default
+        document.documentElement.lang = i18n.language;
+        document.documentElement.dir = i18n.language === 'ar' ? 'rtl' : 'ltr';
     }, [theme]);
 
     const getInitials = () => {
@@ -96,6 +101,10 @@ export default function Layout() {
                     <NavLink to="/" end className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
                         <LayoutDashboard size={20} />
                         {t('nav.dashboard')}
+                    </NavLink>
+                    <NavLink to="/audits" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
+                        <FileSearch size={20} />
+                        {t('nav.audits')}
                     </NavLink>
                     <NavLink to="/obligations" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
                         <FileText size={20} />
@@ -172,10 +181,10 @@ export default function Layout() {
                         className="nav-link"
                         onClick={toggleTheme}
                         style={{ width: '100%', marginBottom: '0.75rem', justifyContent: 'center' }}
-                        title={theme === 'dark' ? 'Passer au mode clair' : 'Passer au mode sombre'}
+                        title={theme === 'dark' ? t('nav.switchToLightMode', 'Passer au mode clair') : t('nav.switchToDarkMode', 'Passer au mode sombre')}
                     >
                         {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
-                        {theme === 'dark' ? 'Mode Clair' : 'Mode Sombre'}
+                        {theme === 'dark' ? t('nav.lightMode', 'Mode Clair') : t('nav.darkMode', 'Mode Sombre')}
                     </button>
 
                     <button className="nav-link" onClick={handleLogout} style={{ width: '100%' }}>

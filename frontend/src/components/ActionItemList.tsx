@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useApi } from '../hooks/useApi';
-import { Trash2, AlertCircle, CheckCircle2, Clock, Plus, X, Save } from 'lucide-react';
+import { Trash2, AlertCircle, CheckCircle2, Clock, Plus, Save } from 'lucide-react';
 import ConfirmModal from './ConfirmModal';
 
 interface ActionItem {
@@ -86,7 +86,7 @@ export default function ActionItemList({ checkId, items, onItemsChange, readOnly
     return (
         <div className="action-items-container">
             <div className="flex justify-between items-center mb-3">
-                <h4 className="text-sm font-semibold text-gray-700">{t('checks.actionItems') || 'Actions à entreprendre'}</h4>
+                <h4 className="text-sm font-semibold mb-0" style={{ color: 'var(--text-primary)' }}>{t('checks.actionItems') || 'Actions à entreprendre'}</h4>
                 {!readOnly && !adding && (
                     <button
                         type="button"
@@ -99,18 +99,18 @@ export default function ActionItemList({ checkId, items, onItemsChange, readOnly
             </div>
 
             {items.length === 0 && !adding && (
-                <div className="text-center p-4 bg-gray-50 rounded border border-gray-200 text-gray-500 text-sm">
+                <div className="text-center p-4 rounded border" style={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--border-color)', color: 'var(--text-secondary)' }}>
                     {t('checks.noActionsDefined')}
                 </div>
             )}
 
             <div className="space-y-2">
                 {items.map((item) => (
-                    <div key={item.id} className="flex items-start gap-3 p-3 bg-white border border-gray-200 rounded shadow-sm">
+                    <div key={item.id} className="flex items-start gap-3 p-3 rounded" style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-color)' }}>
                         <div className="mt-1">{getStatusIcon(item.status)}</div>
                         <div className="flex-1">
                             <div className="flex justify-between items-start">
-                                <span className={`text-sm ${item.status === 'COMPLETED' ? 'line-through text-gray-400' : 'text-gray-800'}`}>
+                                <span className={`text-sm ${item.status === 'COMPLETED' ? 'line-through' : ''}`} style={{ color: item.status === 'COMPLETED' ? 'var(--text-muted)' : 'var(--text-primary)' }}>
                                     {item.description}
                                 </span>
                                 <span className={`text-xs px-2 py-0.5 rounded border ${getPriorityColor(item.priority)}`}>
@@ -147,13 +147,14 @@ export default function ActionItemList({ checkId, items, onItemsChange, readOnly
                 ))}
 
                 {adding && (
-                    <div className="bg-gray-50 p-3 rounded border border-blue-200">
+                    <div className="p-3 rounded border" style={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--primary-light)' }}>
                         <textarea
                             className="form-control w-full text-sm mb-2"
                             rows={2}
                             placeholder={t('checks.actionPlaceholder') || "Décrire l'action..."}
                             value={newItemDesc}
                             onChange={(e) => setNewItemDesc(e.target.value)}
+                            style={{ backgroundColor: 'var(--bg-card)', color: 'var(--text-primary)', borderColor: 'var(--border-color)' }}
                             autoFocus
                         />
                         <div className="flex justify-between items-center">

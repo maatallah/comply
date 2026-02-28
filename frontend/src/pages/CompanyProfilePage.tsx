@@ -50,12 +50,15 @@ export default function CompanyProfilePage() {
 
     // ...
 
+    const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({});
+
     const handleSubmit = async (e: FormEvent) => {
         e.preventDefault();
         if (!company || !user?.companyId) return;
 
         setSaving(true);
         setMessage(null);
+        setFieldErrors({});
 
         try {
             // Only sending editable fields
@@ -75,6 +78,9 @@ export default function CompanyProfilePage() {
                 setCompany(result.data);
             } else {
                 setMessage({ type: 'error', text: result.error?.message || t('messages.error') });
+                if (result.error?.details) {
+                    setFieldErrors(result.error.details);
+                }
             }
         } catch (error) {
             console.error('Error updating company:', error);
@@ -85,7 +91,7 @@ export default function CompanyProfilePage() {
     };
 
     if (loading) return <div className="loading">{t('common.loading')}</div>;
-    if (!company) return <div>Company not found</div>;
+    if (!company) return <div>{t('common.error')}</div>;
 
     return (
         <div className="page-container">
@@ -112,21 +118,23 @@ export default function CompanyProfilePage() {
                             <label className="form-label">{t('profile.legalName')}</label>
                             <input
                                 type="text"
-                                className="form-input"
+                                className={`form-input ${fieldErrors.legalName ? 'is-invalid' : ''}`}
                                 value={company.legalName}
                                 onChange={(e) => setCompany({ ...company, legalName: e.target.value })}
                                 required
                             />
+                            {fieldErrors.legalName && <div className="text-danger small">{fieldErrors.legalName[0]}</div>}
                         </div>
                         <div className="form-group">
                             <label className="form-label">{t('profile.taxId')}</label>
                             <input
                                 type="text"
-                                className="form-input"
+                                className={`form-input ${fieldErrors.taxId ? 'is-invalid' : ''}`}
                                 value={company.taxId}
                                 onChange={(e) => setCompany({ ...company, taxId: e.target.value })}
                                 required
                             />
+                            {fieldErrors.taxId && <div className="text-danger small">{fieldErrors.taxId[0]}</div>}
                         </div>
                     </div>
 
@@ -149,10 +157,11 @@ export default function CompanyProfilePage() {
                             <label className="form-label">{t('profile.cnssId')}</label>
                             <input
                                 type="text"
-                                className="form-input"
+                                className={`form-input ${fieldErrors.cnssId ? 'is-invalid' : ''}`}
                                 value={company.cnssId || ''}
                                 onChange={(e) => setCompany({ ...company, cnssId: e.target.value })}
                             />
+                            {fieldErrors.cnssId && <div className="text-danger small">{fieldErrors.cnssId[0]}</div>}
                         </div>
                     </div>
 
@@ -164,6 +173,18 @@ export default function CompanyProfilePage() {
                             onChange={(e) => setCompany({ ...company, address: e.target.value })}
                             rows={3}
                         />
+                    </div>
+
+                    <div className="form-group">
+                        <label className="form-label">{t('profile.phone')}</label>
+                        <input
+                            type="text"
+                            className={`form-input ${fieldErrors.phone ? 'is-invalid' : ''}`}
+                            value={company.phone || ''}
+                            onChange={(e) => setCompany({ ...company, phone: e.target.value })}
+                            placeholder="+216 71 000 000"
+                        />
+                        {fieldErrors.phone && <div className="text-danger small">{fieldErrors.phone[0]}</div>}
                     </div>
 
                     <div className="form-actions">

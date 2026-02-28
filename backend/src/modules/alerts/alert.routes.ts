@@ -21,10 +21,7 @@ export async function alertRoutes(fastify: FastifyInstance) {
         onRequest: [fastify.authenticate]
     }, alertController.markAllAsRead);
 
-    // DELETE ALL alerts (Debug/Test)
-    fastify.delete('/clear-all', {
-        onRequest: [fastify.authenticate]
-    }, alertController.deleteAllAlerts);
+
 
     // DELETE single alert
     fastify.delete('/:id', {
@@ -36,10 +33,7 @@ export async function alertRoutes(fastify: FastifyInstance) {
         onRequest: [fastify.authenticate]
     }, alertController.bulkAction);
 
-    // GENERATE test alerts (Debug/Test)
-    fastify.post('/test-generate', {
-        onRequest: [fastify.authenticate]
-    }, alertController.generateTestAlerts);
+
 
     // Internal/Admin endpoint to trigger a scan
     fastify.post('/scan', {

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useSearchParams } from 'react-router-dom';
-import { Plus, Pencil, Trash2, ClipboardCheck, X, Search } from 'lucide-react';
+import { useSearchParams, Link } from 'react-router-dom';
+import { Plus, Pencil, Trash2, ClipboardCheck, X, Search, ArrowLeft } from 'lucide-react';
 import { useApi } from '../hooks/useApi';
 import Modal from '../components/Modal';
 import ControlForm from '../components/ControlForm';
@@ -29,6 +29,7 @@ export default function ControlsPage() {
 
     const [searchParams] = useSearchParams();
     const initialId = searchParams.get('id');
+    const fromSource = searchParams.get('from');
 
     const [controls, setControls] = useState<Control[]>([]);
     const [loading, setLoading] = useState(true);
@@ -182,6 +183,7 @@ export default function ControlsPage() {
                         <option value="">{t('obligations.frequency')} {t('common.all')}</option>
                         <option value="MONTHLY">{t('frequency.MONTHLY')}</option>
                         <option value="QUARTERLY">{t('frequency.QUARTERLY')}</option>
+                        <option value="SEMI_ANNUAL">{t('frequency.SEMI_ANNUAL')}</option>
                         <option value="ANNUAL">{t('frequency.ANNUAL')}</option>
                         <option value="CONTINUOUS">{t('frequency.CONTINUOUS')}</option>
                     </select>
@@ -199,9 +201,17 @@ export default function ControlsPage() {
                         <span style={{ fontSize: '0.9rem', color: 'var(--info-text, #0369a1)' }}>
                             {t('controls.filteredById')}
                         </span>
-                        <button className="btn-icon" onClick={() => setFilterId(null)} style={{ width: 24, height: 24 }}>
-                            <X size={14} />
-                        </button>
+                        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                            {fromSource === 'actions' && (
+                                <Link to="/action-plans" className="btn btn-sm btn-outline-primary" style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', padding: '0.25rem 0.5rem', fontSize: '0.8rem', background: 'var(--bg-card)' }}>
+                                    <ArrowLeft size={14} />
+                                    {t('common.back') || 'Retour'}
+                                </Link>
+                            )}
+                            <button className="btn-icon" onClick={() => setFilterId(null)} style={{ width: 24, height: 24 }}>
+                                <X size={14} />
+                            </button>
+                        </div>
                     </div>
                 )}
             </div>

@@ -18,6 +18,7 @@ import { jortRoutes } from './modules/jort/jort.routes';
 import { scoringRoutes } from './modules/scoring';
 import { reportsRoutes } from './modules/reports';
 import { actionItemRoutes } from './modules/action-items/action-item.routes';
+import { auditRoutes } from './modules/audit/audit.routes';
 
 // Load environment variables
 dotenv.config();
@@ -91,7 +92,7 @@ const start = async () => {
         await app.register(cors, {
             origin: allowedOrigins,
             credentials: true,
-            methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+            methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
         });
 
         // Register JWT
@@ -146,6 +147,7 @@ const start = async () => {
         await app.register(scoringRoutes, { prefix: '/scoring' });
         await app.register(reportsRoutes, { prefix: '/reports' });
         await app.register(actionItemRoutes);
+        await app.register(auditRoutes, { prefix: '/audits' });
 
         // Start JORT Scheduler
         const { startJortScheduler } = require('./modules/jort/jort.scheduler');
@@ -172,4 +174,5 @@ const start = async () => {
 };
 
 start();
+
 

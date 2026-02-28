@@ -49,15 +49,7 @@ export class AlertController {
         }
     }
 
-    async deleteAllAlerts(request: FastifyRequest, reply: FastifyReply) {
-        try {
-            const userId = request.user.userId;
-            await alertService.deleteAllAlerts(userId);
-            return reply.send({ success: true });
-        } catch (error: any) {
-            return reply.status(500).send({ success: false, error: { message: error.message } });
-        }
-    }
+
 
     async deleteAlert(request: FastifyRequest, reply: FastifyReply) {
         try {
@@ -87,21 +79,7 @@ export class AlertController {
         }
     }
 
-    async generateTestAlerts(request: FastifyRequest, reply: FastifyReply) {
-        try {
-            const userId = request.user.userId;
-            const companyId = request.user.companyId;
-            console.log('DEBUG: Generate alerts for:', { userId, companyId });
 
-            if (!companyId) return reply.status(400).send({ success: false, error: { message: 'User has no company' } });
-
-            const count = await alertService.generateTestAlerts(userId, companyId);
-            return reply.send({ success: true, data: { count } });
-        } catch (error: any) {
-            console.error('ERROR in generateTestAlerts:', error);
-            return reply.status(500).send({ success: false, error: { message: error.message } });
-        }
-    }
 
     /**
      * Internal/Admin endpoint to trigger a scan

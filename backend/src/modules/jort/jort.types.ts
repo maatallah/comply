@@ -27,6 +27,9 @@ export const ListJortQuerySchema = z.object({
     status: z.enum(['PENDING', 'RELEVANT', 'IGNORED']).optional(),
     ministry: z.string().optional(),
     search: z.string().optional(),
+    year: z.coerce.number().int().min(1900).max(2100).optional(),
+    month: z.coerce.number().int().min(1).max(12).optional(),
+    noiseLevel: z.enum(['LOW', 'MEDIUM', 'HIGH']).default('MEDIUM').optional(),
 });
 
 // ==================== TYPES ====================

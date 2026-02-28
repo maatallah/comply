@@ -33,78 +33,94 @@
   --text-primary: #1f2937;
   --text-secondary: #6b7280;
   --border-color: #e5e7eb;
+
+  /* Table highlights */
+  --bg-danger-light: #fef2f2;
+  --bg-warning-light: #fffbeb;
 }
 
-/* Dark Mode - Premium Black + Neon Lime Theme */
 [data-theme="dark"] {
-  /* Background colors - deep black */
-  --bg-primary: #0a0a0a;
-  --bg-card: #141414;
-  --bg-card-hover: #1a1a1a;
+  /* Backgrounds: Dark slate instead of pure black for better elevation & reduced eye strain */
+  --bg-primary: #0f172a;
+  --bg-card: #1e293b;
+  --bg-card-hover: #334155;
 
-  /* Accent - Neon lime yellow */
+  /* Accent - Neon lime yellow (kept for branding but pairs well with slate) */
   --accent: #d4f528;
   --accent-hover: #c4e518;
 
-  /* Text colors */
-  --text-primary: #ffffff;
-  --text-secondary: #a0a0a0;
-  --text-muted: #666666;
+  /* Text colors: Off-white and muted slates to prevent halation/vibration */
+  --text-primary: #f8fafc;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
 
   /* Border */
-  --border-color: #2a2a2a;
-  --border-light: #1f1f1f;
+  --border-color: #334155;
+  --border-light: #1e293b;
+
+  /* Table highlights - dark mode */
+  --bg-danger-light: rgba(248, 113, 113, 0.15);
+  /* red-400 with opacity */
+  --bg-warning-light: rgba(251, 191, 36, 0.15);
+  /* amber-400 with opacity */
 
   /* Override gray scale for dark */
-  --gray-50: #141414;
-  --gray-100: #1a1a1a;
-  --gray-200: #2a2a2a;
-  --gray-300: #404040;
-  --gray-500: #808080;
-  --gray-700: #c0c0c0;
-  --gray-800: #e0e0e0;
+  --gray-50: #0f172a;
+  --gray-100: #1e293b;
+  --gray-200: #334155;
+  --gray-300: #475569;
+  --gray-500: #64748b;
+  --gray-700: #94a3b8;
+  --gray-800: #cbd5e1;
 
   /* Sidebar */
-  --sidebar-bg: #0a0a0a;
-  --sidebar-text: #a0a0a0;
+  --sidebar-bg: #0f172a;
+  --sidebar-text: #94a3b8;
   --sidebar-active: #d4f528;
 
-  /* Status colors - brighter for dark mode */
-  --success: #22c55e;
+  /* Status colors - desaturated slightly for dark mode mapping */
+  --success: #34d399;
+  /* emerald-400 */
   --warning: #fbbf24;
+  /* amber-400 */
   --danger: #f87171;
-  --primary: #60a5fa;
-  --primary-light: #93c5fd;
+  /* red-400 */
+  --primary: #93c5fd;
+  /* blue-300 */
+  --primary-light: #bfdbfe;
+  /* blue-200 */
 }
 
 /* Auto dark mode based on system preference */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg-primary: #0a0a0a;
-    --bg-card: #141414;
-    --bg-card-hover: #1a1a1a;
+    --bg-primary: #0f172a;
+    --bg-card: #1e293b;
+    --bg-card-hover: #334155;
     --accent: #d4f528;
     --accent-hover: #c4e518;
-    --text-primary: #ffffff;
-    --text-secondary: #a0a0a0;
-    --text-muted: #666666;
-    --border-color: #2a2a2a;
-    --border-light: #1f1f1f;
-    --gray-50: #141414;
-    --gray-100: #1a1a1a;
-    --gray-200: #2a2a2a;
-    --gray-300: #404040;
-    --gray-500: #808080;
-    --gray-700: #c0c0c0;
-    --gray-800: #e0e0e0;
-    --sidebar-bg: #0a0a0a;
-    --sidebar-text: #a0a0a0;
+    --text-primary: #f8fafc;
+    --text-secondary: #94a3b8;
+    --text-muted: #64748b;
+    --border-color: #334155;
+    --border-light: #1e293b;
+    --bg-danger-light: rgba(248, 113, 113, 0.15);
+    --bg-warning-light: rgba(251, 191, 36, 0.15);
+    --gray-50: #0f172a;
+    --gray-100: #1e293b;
+    --gray-200: #334155;
+    --gray-300: #475569;
+    --gray-500: #64748b;
+    --gray-700: #94a3b8;
+    --gray-800: #cbd5e1;
+    --sidebar-bg: #0f172a;
+    --sidebar-text: #94a3b8;
     --sidebar-active: #d4f528;
-    --success: #22c55e;
+    --success: #34d399;
     --warning: #fbbf24;
     --danger: #f87171;
-    --primary: #60a5fa;
-    --primary-light: #93c5fd;
+    --primary: #93c5fd;
+    --primary-light: #bfdbfe;
   }
 }
 
@@ -123,6 +139,33 @@ body {
   transition: background-color 0.3s, color 0.3s;
 }
 
+/* Links */
+a {
+  color: var(--primary);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+/* Table Row Highlights */
+tr.tr-danger {
+  background-color: var(--bg-danger-light);
+}
+
+tr.tr-warning {
+  background-color: var(--bg-warning-light);
+}
+
+.bg-danger-light {
+  background-color: var(--bg-danger-light);
+}
+
+.bg-warning-light {
+  background-color: var(--bg-warning-light);
+}
+
 /* RTL Support */
 html[dir="rtl"] {
   direction: rtl;
@@ -136,6 +179,14 @@ html[dir="rtl"] .sidebar {
 html[dir="rtl"] .main-content {
   margin-right: 250px;
   margin-left: 0;
+}
+
+/* RTL: Flip directional icons (back arrows, chevrons) */
+html[dir="rtl"] .btn-icon svg,
+html[dir="rtl"] .btn svg,
+html[dir="rtl"] a.btn svg,
+html[dir="rtl"] [class*="btn-"] svg {
+  transform: scaleX(-1);
 }
 
 /* Layout */

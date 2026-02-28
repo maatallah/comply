@@ -45,7 +45,7 @@ export default function RegulationDetails() {
     }, [id]);
 
     if (loading) return <div className="loading">{t('common.loading')}</div>;
-    if (!regulation) return <div className="error">Réglementation introuvable</div>;
+    if (!regulation) return <div className="error">{t('errors.regulationNotFound')}</div>;
 
     const title = i18n.language === 'ar' && regulation.titleAr ? regulation.titleAr : regulation.titleFr;
     const description = i18n.language === 'ar' && regulation.descriptionAr ? regulation.descriptionAr : regulation.descriptionFr;
@@ -54,7 +54,7 @@ export default function RegulationDetails() {
         <div className="page-container">
             <button className="btn btn-secondary btn-sm" onClick={() => navigate('/regulations')} style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
                 <ChevronLeft size={16} />
-                Retour aux textes
+                {t('regulationDetails.backToRegulations')}
             </button>
 
             <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '2rem' }}>
@@ -80,13 +80,13 @@ export default function RegulationDetails() {
                 <div>
                     <div className="card" style={{ padding: '1.5rem', position: 'sticky', top: '2rem' }}>
                         <h2 style={{ fontSize: '1.1rem', fontWeight: 600, marginBottom: '1.25rem', borderBottom: '1px solid var(--gray-100)', paddingBottom: '0.75rem' }}>
-                            Informations Textuelles
+                            {t('regulationDetails.textualInfo')}
                         </h2>
 
                         <div style={{ display: 'grid', gap: '1.25rem' }}>
                             <div>
                                 <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--gray-500)', textTransform: 'uppercase', marginBottom: '0.25rem' }}>
-                                    Autorité Émettrice
+                                    {t('regulationDetails.issuingAuthority')}
                                 </label>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 500 }}>
                                     <ShieldCheck size={18} className="text-primary" />
@@ -96,7 +96,7 @@ export default function RegulationDetails() {
 
                             <div>
                                 <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--gray-500)', textTransform: 'uppercase', marginBottom: '0.25rem' }}>
-                                    Secteur / Thématique
+                                    {t('regulationDetails.sectorTheme')}
                                 </label>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 500 }}>
                                     <Tag size={18} className="text-primary" />
@@ -114,7 +114,7 @@ export default function RegulationDetails() {
                                         style={{ width: '100%', justifyContent: 'center' }}
                                     >
                                         <ExternalLink size={16} />
-                                        Consulter le texte officiel
+                                        {t('regulationDetails.viewOfficialText')}
                                     </a>
                                 </div>
                             )}
@@ -124,7 +124,7 @@ export default function RegulationDetails() {
                             <div style={{ textAlign: 'center', padding: '1.5rem', background: 'var(--gray-50)', borderRadius: 'var(--radius)' }}>
                                 <BookOpen size={32} style={{ color: 'var(--gray-300)', marginBottom: '0.75rem' }} />
                                 <p style={{ fontSize: '0.875rem', color: 'var(--gray-500)' }}>
-                                    Ce texte définit les obligations de conformité pour votre entreprise.
+                                    {t('regulationDetails.complianceDefinition')}
                                 </p>
                             </div>
                         </div>

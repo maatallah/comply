@@ -12,6 +12,7 @@ export async function seedUsers() {
         where: { taxId: '0000000/A/A/M/000' },
         update: {},
         create: {
+            id: '11111111-1111-1111-1111-111111111111', // Deterministic ID for testing
             legalName: 'Société Test S.A.R.L',
             tradeName: 'Test Corp',
             taxId: '0000000/A/A/M/000',

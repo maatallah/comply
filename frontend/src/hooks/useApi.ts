@@ -125,8 +125,7 @@ export function useApi() {
         markAlertRead: (id: string) => fetchWithAuth(`/alerts/${id}/read`, { method: 'PUT', body: JSON.stringify({}) }),
         markAllAlertsRead: () => fetchWithAuth('/alerts/read-all', { method: 'PUT', body: JSON.stringify({}) }),
         triggerAlertScan: () => fetchWithAuth('/alerts/scan', { method: 'POST', body: JSON.stringify({}) }),
-        generateTestAlerts: () => fetchWithAuth('/alerts/test-generate', { method: 'POST', body: JSON.stringify({}) }),
-        clearAllAlerts: () => fetchWithAuth('/alerts/clear-all', { method: 'DELETE' }),
+
         deleteAlert: (id: string) => fetchWithAuth(`/alerts/${id}`, { method: 'DELETE' }),
         bulkAlertAction: (ids: string[], action: 'read' | 'delete') =>
             fetchWithAuth('/alerts/bulk', {

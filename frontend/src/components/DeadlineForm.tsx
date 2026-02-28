@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useApi } from '../hooks/useApi';
+import LocaleDateInput from './LocaleDateInput';
 
 interface Obligation {
     id: string;
@@ -149,11 +150,10 @@ export default function DeadlineForm({ deadline, obligations: propObligations, p
             {/* Due Date */}
             <div className="form-group">
                 <label className="form-label">{t('form.dueDate')} *</label>
-                <input
-                    type="date"
+                <LocaleDateInput
                     className={`form-input ${errors.dueDate ? 'error' : ''}`}
                     value={formData.dueDate}
-                    onChange={(e) => handleChange('dueDate', e.target.value)}
+                    onChange={(val) => handleChange('dueDate', val)}
                 />
                 {errors.dueDate && <div className="form-error">{errors.dueDate}</div>}
             </div>

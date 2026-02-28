@@ -14,7 +14,8 @@ export async function seedTestData() {
     console.log('🧪 Seeding Test Data...\n');
 
     // Get the first company
-    const company = await prisma.company.findFirst({
+    const company = await prisma.company.findUnique({
+        where: { id: '11111111-1111-1111-1111-111111111111' },
         include: { users: true }
     });
 
@@ -43,6 +44,7 @@ export async function seedTestData() {
     console.log('  📋 Creating Obligations...');
     const obligationData = [
         { regulationCode: 'BSCI-2021', titleFr: 'Audit BSCI annuel', frequency: 'ANNUAL', riskLevel: 'CRITICAL', category: 'BRAND_AUDIT' },
+        { regulationCode: 'FOTL-COC-2025', titleFr: 'Audit Fruit of the Loom', frequency: 'ANNUAL', riskLevel: 'CRITICAL', category: 'BRAND_AUDIT' },
         { regulationCode: 'DEC-75-503', titleFr: 'Visite Protection Civile', frequency: 'BIENNIAL', riskLevel: 'HIGH', category: 'HSE' },
         { regulationCode: 'DEC-75-503', titleFr: 'Vérification extincteurs', frequency: 'ANNUAL', riskLevel: 'MEDIUM', category: 'HSE' },
         { regulationCode: 'DEC-2000-1985', titleFr: 'Contrôle électrique', frequency: 'ANNUAL', riskLevel: 'HIGH', category: 'HSE' },
@@ -88,6 +90,7 @@ export async function seedTestData() {
     console.log('\n  🔍 Creating Controls...');
     const controlData = [
         { obligationTitle: 'Audit BSCI annuel', titleFr: 'Rapport d\'audit BSCI', controlType: 'CERTIFICATION', expectedEvidence: 'Rapport PDF avec score', frequency: 'ANNUAL' },
+        { obligationTitle: 'Audit Fruit of the Loom', titleFr: 'Rapport d\'audit FOTL', controlType: 'CERTIFICATION', expectedEvidence: 'Rapport d\'audit complet (Vert/Jaune)', frequency: 'ANNUAL' },
         { obligationTitle: 'Audit BSCI annuel', titleFr: 'Registre heures de travail', controlType: 'DOCUMENT', expectedEvidence: 'Export pointeuse', frequency: 'CONTINUOUS' },
         { obligationTitle: 'Visite Protection Civile', titleFr: 'PV Protection Civile', controlType: 'CERTIFICATION', expectedEvidence: 'PV signé + cachet', frequency: 'BIENNIAL' },
         { obligationTitle: 'Vérification extincteurs', titleFr: 'Étiquettes extincteurs', controlType: 'INSPECTION', expectedEvidence: 'Photos des étiquettes', frequency: 'ANNUAL' },
@@ -257,6 +260,93 @@ export async function seedTestData() {
         console.log(`     ✅ ${alert.type}: ${alert.messageFr.slice(0, 40)}...`);
     }
 
+    // ==================== CREATE AUDITS & TYPES ====================
+    console.log('\n  📋 Creating Audit Types...');
+
+    const auditTypesData = [
+        { name: 'BSCI Full Audit', nameAr: 'تدقيق BSCI الكامل', category: 'SOCIAL', scope: 'EXTERNAL', frequency: 24, description: 'Audit social complet par organisme tiers (TÜV, SGS...)', descriptionAr: 'تدقيق اجتماعي كامل من قبل جهة خارجية (TÜV, SGS...)' },
+        { name: 'Fruit of the Loom CoC', nameAr: 'تدقيق مدونة سلوك FOTL', category: 'BRAND', scope: 'EXTERNAL', frequency: 12, description: 'Audit Code de Conduite FOTL', descriptionAr: 'تدقيق مدونة السلوك فروت أوف ذا لوم' },
+        { name: 'Mock Audit BSCI', nameAr: 'تدقيق تجريبي BSCI', category: 'SOCIAL', scope: 'INTERNAL', frequency: 6, description: 'Auto-évaluation blanche avant audit officiel', descriptionAr: 'تقييم ذاتي تجريبي قبل التدقيق الرسمي' },
+        { name: 'Inspection Mensuelle HSE', nameAr: 'جولة تفتيش شهرية للصحة والسلامة', category: 'HSE', scope: 'INTERNAL', frequency: 1, description: 'Ronde sécurité et hygiène mensuelle', descriptionAr: 'جولة شهرية للسلامة والصحة المهنية' },
+    ];
+
+    const createdTypes: any[] = [];
+
+    for (const t of auditTypesData) {
+        const upserted = await prisma.auditType.upsert({
+            where: { name: t.name },
+            update: { nameAr: t.nameAr, descriptionAr: t.descriptionAr },
+            create: t,
+        });
+        createdTypes.push(upserted);
+        console.log(`     ✅ ${t.name} / ${t.nameAr}`);
+    }
+
+    console.log('\n  🔍 Creating Sample Audits...');
+
+    const bsciType = createdTypes.find(t => t.name === 'BSCI Full Audit');
+    const mockType = createdTypes.find(t => t.name === 'Mock Audit BSCI');
+
+    // Create an External Audit
+    if (bsciType) {
+        const existingAudit = await prisma.audit.findFirst({
+            where: { companyId: company.id, auditTypeId: bsciType.id }
+        });
+
+        if (!existingAudit) {
+            await prisma.audit.create({
+                data: {
+                    companyId: company.id,
+                    auditTypeId: bsciType.id,
+                    scheduledDate: new Date('2026-06-15'),
+                    status: 'SCHEDULED',
+                    auditorName: 'SGS Tunisia',
+                }
+            });
+            console.log(`     ✅ Scheduled External Audit: BSCI (June 2026)`);
+        }
+    }
+
+    // Create a Completed Internal Audit with CAP
+    if (mockType) {
+        const existingInternal = await prisma.audit.findFirst({
+            where: { companyId: company.id, auditTypeId: mockType.id }
+        });
+
+        if (!existingInternal) {
+            const audit = await prisma.audit.create({
+                data: {
+                    companyId: company.id,
+                    auditTypeId: mockType.id,
+                    scheduledDate: new Date('2026-01-10'),
+                    performedDate: new Date('2026-01-10'),
+                    status: 'COMPLETED',
+                    score: 85,
+                    ratingLabel: 'B',
+                    leadAuditorId: user.id,
+                    auditTeam: {
+                        connect: [{ id: user.id }]
+                    },
+                    resultSummary: 'Bon niveau général. Quelques écarts mineurs sur la signalétique.',
+                }
+            });
+            console.log(`     ✅ Completed Internal Audit: Mock BSCI (Score 85, Team: ${user.firstName})`);
+
+            // Add CAP
+            await prisma.correctiveAction.create({
+                data: {
+                    auditId: audit.id,
+                    description: 'Signalétique extincteurs manquante dans l\'atelier 2',
+                    severity: 'MINOR',
+                    status: 'OPEN',
+                    assignedTo: user.id,
+                    dueDate: new Date('2026-01-25'),
+                }
+            });
+            console.log(`     └─ Added Corrective Action: Signalétique manquante`);
+        }
+    }
+
     console.log('\n✨ Test data seeding complete!\n');
 
     // Summary
@@ -266,6 +356,7 @@ export async function seedTestData() {
         checks: await prisma.check.count({ where: { companyId: company.id } }),
         deadlines: await prisma.deadline.count({ where: { companyId: company.id } }),
         alerts: await prisma.alert.count({ where: { companyId: company.id } }),
+        audits: await prisma.audit.count({ where: { companyId: company.id } }),
     };
 
     console.log('📊 Summary:');
@@ -274,6 +365,7 @@ export async function seedTestData() {
     console.log(`   - Checks: ${summary.checks}`);
     console.log(`   - Deadlines: ${summary.deadlines}`);
     console.log(`   - Alerts: ${summary.alerts}`);
+    console.log(`   - Audits: ${summary.audits}`);
 }
 
 // Run if called directly

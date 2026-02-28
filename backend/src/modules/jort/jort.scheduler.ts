@@ -22,6 +22,11 @@ export function startJortScheduler() {
         try {
             const result = await jortScraper.scrapeLatest();
             console.log(`✅ Scheduled scrape complete: ${result.stats.new} new, ${result.stats.duplicates} duplicates, ${result.stats.errors} errors`);
+
+            // Run Gap Scan
+            console.log('🔎 Running Gap Scan...');
+            await jortScraper.scanMissingJorts();
+            console.log('✅ Gap Scan complete');
         } catch (error: any) {
             console.error(`❌ Scheduled scrape failed: ${error.message}`);
         }

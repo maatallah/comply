@@ -138,6 +138,69 @@ export default function DeadlinesPage() {
                 </button>
             </div>
 
+            <div className="card" style={{ marginBottom: '1.5rem', overflowX: 'auto', padding: '1.5rem' }}>
+                <h3 style={{ marginBottom: '1.5rem', fontSize: '1rem', color: 'var(--gray-800)' }}>
+                    {t('deadlines.timeline') || 'Prochaines échéances'}
+                </h3>
+                {(() => {
+                    const upcoming = deadlines
+                        .filter(dl => dl.status !== 'COMPLETED')
+                        .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())
+                        .slice(0, 5);
+
+                    if (upcoming.length === 0) {
+                        return (
+                            <div style={{ width: '100%', textAlign: 'center', color: 'var(--gray-400)', fontSize: '0.875rem', padding: '1rem 0' }}>
+                                {t('deadlines.noUpcoming') || 'Aucune échéance à venir'}
+                            </div>
+                        );
+                    }
+
+                    return (
+                        <div>
+                            {/* Row 1: Circles + line (fixed height) */}
+                            <div style={{ display: 'flex', position: 'relative', height: '26px', alignItems: 'center' }}>
+                                {/* Connection line */}
+                                <div style={{ position: 'absolute', top: '50%', left: '5%', right: '5%', height: '2px', background: 'var(--gray-200)', transform: 'translateY(-50%)' }}></div>
+                                {upcoming.map((dl) => {
+                                    const overdue = isOverdue(dl.dueDate, dl.status);
+                                    const color = overdue ? 'var(--danger)' : 'var(--warning)';
+                                    return (
+                                        <div key={`dot-${dl.id}`} style={{ flex: 1, display: 'flex', justifyContent: 'center', position: 'relative', zIndex: 1 }}>
+                                            <div style={{
+                                                width: '18px',
+                                                height: '18px',
+                                                borderRadius: '50%',
+                                                background: color,
+                                                border: '4px solid white',
+                                                boxShadow: `0 0 0 2px ${color}`,
+                                                flexShrink: 0
+                                            }} title={getStatusLabel(dl.status, dl.dueDate)}></div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                            {/* Row 2: Labels (variable height) */}
+                            <div style={{ display: 'flex', marginTop: '0.5rem' }}>
+                                {upcoming.map((dl) => {
+                                    const overdue = isOverdue(dl.dueDate, dl.status);
+                                    return (
+                                        <div key={`lbl-${dl.id}`} style={{ flex: 1, textAlign: 'center' }}>
+                                            <div style={{ fontSize: '0.875rem', fontWeight: 600, color: overdue ? 'var(--danger)' : 'var(--gray-800)' }}>
+                                                {formatDate(dl.dueDate)}
+                                            </div>
+                                            <div style={{ fontSize: '0.75rem', color: 'var(--gray-500)', maxWidth: '140px', margin: '0 auto', padding: '0 0.5rem' }} title={dl.obligation?.titleFr}>
+                                                {dl.obligation?.titleFr || '-'}
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    );
+                })()}
+            </div>
+
             {/* Table */}
             <div className="card">
                 {deadlines.length === 0 ? (
@@ -159,7 +222,7 @@ export default function DeadlinesPage() {
                             </thead>
                             <tbody>
                                 {deadlines.map(dl => (
-                                    <tr key={dl.id} style={isOverdue(dl.dueDate, dl.status) ? { background: '#fef2f2' } : undefined}>
+                                    <tr key={dl.id} className={isOverdue(dl.dueDate, dl.status) ? 'tr-danger' : undefined}>
                                         <td>
                                             <strong>{dl.obligation?.titleFr || '-'}</strong>
                                         </td>

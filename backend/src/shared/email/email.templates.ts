@@ -23,6 +23,48 @@ interface CheckReport {
 }
 
 export const emailTemplates = {
+    systemAlert: (data: { title: string; message: string; severity: string; type: string; lang?: string }) => {
+        const isAr = data.lang === 'ar';
+        const dir = isAr ? 'rtl' : 'ltr';
+        const align = isAr ? 'right' : 'left';
+
+        const colors = {
+            CRITICAL: '#dc2626', // red
+            HIGH: '#ea580c',     // orange
+            MEDIUM: '#d97706',   // amber
+            LOW: '#2563eb'       // blue
+        };
+        const color = colors[data.severity as keyof typeof colors] || colors.MEDIUM;
+
+        const labels = {
+            header: isAr ? 'تنبيه النظام' : 'Alerte Système',
+            viewApp: isAr ? 'عرض في التطبيق' : 'Voir dans l\'application'
+        };
+
+        return `
+<!DOCTYPE html>
+<html lang="${data.lang || 'fr'}" dir="${dir}">
+<body style="font-family: sans-serif; color: #333; direction: ${dir}; text-align: ${align};">
+    <div style="max-width: 600px; margin: 0 auto; border: 1px solid #e5e7eb; border-radius: 8px;">
+        <div style="background-color: ${color}; color: white; padding: 20px; text-align: center;">
+            <h2 style="margin:0;">${labels.header}</h2>
+            <p style="margin:5px 0 0;">${data.type}</p>
+        </div>
+        <div style="padding: 20px;">
+            <h3 style="color: #374151;">${data.title}</h3>
+            <p style="font-size: 16px; line-height: 1.5; color: #4b5563;">${data.message}</p>
+            
+            <div style="text-align: center; margin-top: 30px;">
+                <a href="${process.env.APP_URL || 'http://localhost:5173'}/alerts" style="display: inline-block; background-color: #3b82f6; color: white; text-decoration: none; padding: 10px 20px; border-radius: 6px;">
+                    ${labels.viewApp}
+                </a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>`;
+    },
+
     newRegulationAlert: (entry: JortEntry, impact: ImpactResult) => {
         const severityColor = impact.score > 70 ? '#ef4444' : '#f59e0b';
         const severityLabel = impact.score > 70 ? 'CRITIQUE' : 'IMPORTANT';
@@ -143,6 +185,7 @@ export const emailTemplates = {
         const freqMap: Record<string, string> = {
             'MONTHLY': isAr ? 'شهري' : 'Mensuel',
             'QUARTERLY': isAr ? 'ربع سنوي' : 'Trimestriel',
+            'SEMI_ANNUAL': isAr ? 'نصف سنوي' : 'Semestriel',
             'ANNUAL': isAr ? 'سنوي' : 'Annuel',
             'BIENNIAL': isAr ? 'كل سنتين' : 'Biennal',
             'TRIENNIAL': isAr ? 'كل ثلاث سنوات' : 'Triennal',

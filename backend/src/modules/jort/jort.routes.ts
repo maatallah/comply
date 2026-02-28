@@ -12,6 +12,21 @@ export async function jortRoutes(app: FastifyInstance) {
         return reply.send({ success: true, ...result });
     });
 
+    // GET /jort-feed/years (available years)
+    app.get('/years', async (request: FastifyRequest, reply: FastifyReply) => {
+        const years = await jortService.getAvailableYears();
+        return reply.send({ success: true, years });
+    });
+
+    // GET /jort-feed/stats/:year (monthly stats)
+    app.get('/stats/:year', async (request: any, reply: FastifyReply) => {
+        const { year } = request.params;
+        const { status, noiseLevel } = request.query as { status?: 'PENDING' | 'RELEVANT' | 'IGNORED', noiseLevel?: 'LOW' | 'MEDIUM' | 'HIGH' };
+        const stats = await jortService.getMonthlyStats(Number(year), status, noiseLevel);
+        const serialized = stats.map(s => ({ month: s.month, count: s.count }));
+        return reply.send({ success: true, stats: serialized });
+    });
+
     // POST /jort-feed/:id/process
     app.post('/:id/process', { preHandler: [app.authenticate] }, async (request: any, reply: FastifyReply) => {
         const { id } = request.params;

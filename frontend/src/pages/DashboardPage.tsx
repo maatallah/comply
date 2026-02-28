@@ -37,7 +37,7 @@ interface DeadlineSummary {
 // const CHART_COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
 
 export default function DashboardPage() {
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
     const { user, token } = useAuth();
 
     const [obligationSummary, setObligationSummary] = useState<Summary | null>(null);
@@ -79,7 +79,7 @@ export default function DashboardPage() {
                 if (scoringResult.success) setComplianceBreakdown(scoringResult.data);
             } catch (err) {
                 console.error('Error fetching dashboard data:', err);
-                if (isMounted) setError('Failed to load dashboard data');
+                if (isMounted) setError(t('dashboard.loadError'));
             } finally {
                 if (isMounted) setLoading(false);
             }
@@ -157,7 +157,7 @@ export default function DashboardPage() {
                     style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
                 >
                     <Download size={18} />
-                    {exporting ? 'Export...' : 'Exporter PDF'}
+                    {exporting ? t('dashboard.exporting') : t('dashboard.exportPdf')}
                 </button>
             </div>
 
@@ -330,20 +330,66 @@ export default function DashboardPage() {
                                 <div style={{ fontSize: '0.875rem', fontWeight: 600, marginBottom: '1rem', color: 'var(--text-secondary, #64748b)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                                     {t('dashboard.byCategory')}
                                 </div>
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                                    {complianceBreakdown.categories.map((cat, idx) => {
-                                        const total = cat.totalControls || 1;
-                                        const passPercent = (cat.passedControls / total) * 100;
-                                        const partialPercent = (cat.partialControls / total) * 100;
-                                        const failPercent = (cat.failedControls / total) * 100;
-                                        const uncheckPercent = (cat.notCheckedControls / total) * 100;
+                                {complianceBreakdown.categories.map((cat, idx) => {
+                                    const total = cat.totalControls || 1;
+                                    const passPercent = (cat.passedControls / total) * 100;
+                                    const partialPercent = (cat.partialControls / total) * 100;
+                                    const failPercent = (cat.failedControls / total) * 100;
+                                    const uncheckPercent = (cat.notCheckedControls / total) * 100;
 
-                                        return (
-                                            <div key={idx} style={{
+                                    // Find stats from obligationSummary
+                                    const categoryStats = obligationSummary?.byCategory.find(c => c.category === cat.category);
+                                    const totalObligations = categoryStats?.total || 0;
+                                    const highRiskCount = categoryStats?.highRisk || 0;
+
+                                    return (
+                                        <div key={idx} style={{
+                                            display: 'flex',
+                                            gap: '1rem',
+                                            marginBottom: '1rem',
+                                            alignItems: 'stretch'
+                                        }}>
+                                            {/* Risk Badge */}
+                                            <div style={{
+                                                minWidth: '100px',
+                                                background: 'linear-gradient(to bottom, #fff7ed, #ffedd5)',
+                                                border: '1px solid #fed7aa',
+                                                borderRadius: '12px',
+                                                padding: '0.75rem',
+                                                display: 'flex',
+                                                flexDirection: 'column',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                textAlign: 'center',
+                                                boxShadow: '0 2px 4px rgba(249, 115, 22, 0.1)'
+                                            }}>
+                                                <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--primary)', lineHeight: 1 }}>{totalObligations}</div>
+                                                <div style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', marginBottom: '0.5rem', lineHeight: 1.2 }}>
+                                                    {t(`category.${cat.category}`, cat.category)}
+                                                </div>
+                                                {highRiskCount > 0 ? (
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', color: '#ef4444', fontWeight: 700, fontSize: '0.75rem' }}>
+                                                        <AlertTriangle size={12} fill="#ef4444" />
+                                                        <span>{highRiskCount}</span>
+                                                        <span style={{ fontSize: '0.6rem', fontWeight: 500 }}>{t('dashboard.highRisk')}</span>
+                                                    </div>
+                                                ) : (
+                                                    <div style={{ fontSize: '0.7rem', color: '#10b981', fontWeight: 500 }}>
+                                                        {t('dashboard.onTrack')}
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            {/* Progress Bar Card */}
+                                            <div style={{
+                                                flex: 1,
                                                 padding: '1rem 1.25rem',
                                                 background: 'var(--bg-card-hover, #f8fafc)',
                                                 borderRadius: '12px',
-                                                border: '1px solid var(--border-light, #e2e8f0)'
+                                                border: '1px solid var(--border-light, #e2e8f0)',
+                                                display: 'flex',
+                                                flexDirection: 'column',
+                                                justifyContent: 'center'
                                             }}>
                                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
                                                     <span style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--text-primary)' }}>
@@ -386,9 +432,9 @@ export default function DashboardPage() {
                                                     <span><span style={{ color: '#94a3b8', fontWeight: 600 }}>{cat.notCheckedControls}</span> {t('dashboard.nv')}</span>
                                                 </div>
                                             </div>
-                                        );
-                                    })}
-                                </div>
+                                        </div>
+                                    );
+                                })}
                             </div>
                         </div>
                     ) : (
@@ -398,7 +444,7 @@ export default function DashboardPage() {
                                     <tr style={{ borderBottom: '2px solid var(--gray-100)' }}>
                                         <th style={{ textAlign: 'start', padding: '1rem', color: 'var(--text-secondary)', fontWeight: 600 }}>{t('obligations.category')}</th>
                                         <th style={{ textAlign: 'center', padding: '1rem', color: 'var(--text-secondary)', fontWeight: 600 }}>{t('dashboard.conformity')}</th>
-                                        <th style={{ textAlign: 'start', padding: '1rem', color: 'var(--text-secondary)', fontWeight: 600 }}>Détails</th>
+                                        <th style={{ textAlign: 'start', padding: '1rem', color: 'var(--text-secondary)', fontWeight: 600 }}>{t('common.details')}</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -458,7 +504,8 @@ export default function DashboardPage() {
                         </div>
                     )}
                 </div>
-            )}
+            )
+            }
 
             {/* JORT Feed Section */}
             <div className="card" style={{ marginTop: '2rem' }}>
@@ -468,54 +515,40 @@ export default function DashboardPage() {
                         {t('regulatory.feed') || 'Veille Réglementaire JORT'}
                     </h2>
                     <a href="/jort-feed" style={{ fontSize: '0.875rem', color: 'var(--primary-color)', display: 'flex', alignItems: 'center', gap: '0.25rem', fontWeight: 500, textDecoration: 'none' }}>
-                        Voir tout
+                        {t('dashboard.viewAll')}
                         <ChevronRight size={16} />
                     </a>
                 </div>
 
                 {jortEntries.length > 0 ? (
                     <div style={{ display: 'grid', gap: '1rem' }}>
-                        {jortEntries.map((entry) => (
-                            <div key={entry.id} style={{ display: 'flex', gap: '1rem', padding: '1rem', background: 'var(--gray-50)', borderRadius: 'var(--radius)', borderLeft: '3px solid var(--primary-color)' }}>
-                                <div style={{ flex: 1 }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
-                                        <span className="badge info" style={{ fontSize: '0.7rem' }}>{entry.type}</span>
-                                        <span style={{ fontSize: '0.75rem', color: 'var(--gray-500)' }}>{new Date(entry.date).toLocaleDateString()}</span>
+                        {jortEntries.map((entry) => {
+                            const displayTitle = i18n.language === 'ar' ? (entry.titleAr || entry.titleFr) : entry.titleFr;
+                            const displayMinistry = i18n.language === 'ar' ? (entry.ministryAr || entry.ministry) : entry.ministry;
+
+                            return (
+                                <div key={entry.id} style={{ display: 'flex', gap: '1rem', padding: '1rem', background: 'var(--gray-50)', borderRadius: 'var(--radius)', borderLeft: '3px solid var(--primary-color)', direction: i18n.language === 'ar' ? 'rtl' : 'ltr' }}>
+                                    <div style={{ flex: 1 }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem', flexDirection: i18n.language === 'ar' ? 'row-reverse' : 'row' }}>
+                                            <span className="badge info" style={{ fontSize: '0.7rem' }}>{entry.type}</span>
+                                            <span style={{ fontSize: '0.75rem', color: 'var(--gray-500)', display: 'flex', alignItems: 'center', gap: '0.25rem', flexDirection: i18n.language === 'ar' ? 'row-reverse' : 'row' }}>
+                                                <Clock size={12} />
+                                                {new Date(entry.date).toLocaleDateString(i18n.language === 'ar' ? 'ar-TN' : 'fr-FR')}
+                                            </span>
+                                        </div>
+                                        <div style={{ fontSize: '0.9rem', fontWeight: 500, lineHeight: '1.4', textAlign: i18n.language === 'ar' ? 'right' : 'left' }}>{displayTitle}</div>
+                                        <div style={{ fontSize: '0.75rem', color: 'var(--gray-500)', marginTop: '0.25rem', textAlign: i18n.language === 'ar' ? 'right' : 'left' }}>{displayMinistry}</div>
                                     </div>
-                                    <div style={{ fontSize: '0.9rem', fontWeight: 500, lineHeight: '1.4' }}>{entry.titleFr}</div>
-                                    <div style={{ fontSize: '0.75rem', color: 'var(--gray-500)', marginTop: '0.25rem' }}>{entry.ministry}</div>
                                 </div>
-                            </div>
-                        ))}
+                            )
+                        })}
                     </div>
                 ) : (
-                    <p style={{ textAlign: 'center', color: 'var(--gray-500)', padding: '1rem' }}>Aucune nouvelle publication détectée.</p>
+                    <p style={{ textAlign: 'center', color: 'var(--gray-500)', padding: '1rem' }}>{t('dashboard.noJortEntries')}</p>
                 )}
             </div>
 
-            {/* Category Breakdown (Legacy) */}
-            {
-                obligationSummary?.byCategory && obligationSummary.byCategory.length > 0 && (
-                    <div className="card">
-                        <h2 className="card-title">{t('dashboard.byCategory')}</h2>
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '1rem', marginTop: '1rem' }}>
-                            {obligationSummary.byCategory.map((item) => (
-                                <div key={item.category} style={{ textAlign: 'center', padding: '1rem', background: 'var(--gray-50)', borderRadius: 'var(--radius)' }}>
-                                    <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--primary)' }}>{item.total}</div>
-                                    <div style={{ fontSize: '0.875rem', color: 'var(--gray-500)' }}>
-                                        {t(`category.${item.category}`, item.category)}
-                                    </div>
-                                    {item.highRisk > 0 && (
-                                        <div style={{ fontSize: '0.75rem', color: 'var(--danger)', marginTop: '0.25rem' }}>
-                                            ⚠️ {item.highRisk} {t('dashboard.highRisk')}
-                                        </div>
-                                    )}
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                )
-            }
+
         </div >
     );
 }

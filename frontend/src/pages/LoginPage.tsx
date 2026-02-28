@@ -33,6 +33,7 @@ export default function LoginPage() {
     const switchLanguage = (lang: string) => {
         i18n.changeLanguage(lang);
         document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+        document.documentElement.lang = lang;
     };
 
     return (

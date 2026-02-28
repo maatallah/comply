@@ -92,6 +92,9 @@ export class JortScraper {
                                 entry.pdfUrlAr = pdfs.pdfAr;
                                 console.log(`   └─ Found PDF (AR): ${pdfs.pdfAr}`);
                             }
+                            if (pdfs.jortNumber) {
+                                console.log(`   └─ Found JORT Number: ${pdfs.jortNumber}`);
+                            }
 
                             if (!pdfs.pdfFr && !pdfs.pdfAr) {
                                 console.log(`   └─ No PDF found.`);
@@ -110,6 +113,7 @@ export class JortScraper {
                                 pdfUrl: entry.pdfUrl,
                                 pdfUrlAr: entry.pdfUrlAr,
                                 recordId: entry.recordId,
+                                jortNumber: pdfs.jortNumber || undefined,
                             });
                             stats.new++;
                             allEntries.push(entry);
@@ -134,6 +138,189 @@ export class JortScraper {
     }
 
     /**
+     * Scrape a specific JORT number for a given year
+     * Uses the advanced search pattern that proved more reliable for finding missing entries
+     */
+    async scrapeSpecificJort(year: number, number: string): Promise<number> {
+        console.log(`🔍 Scraper: Targeting specific JORT N°${number}/${year}...`);
+        const paddedNumber = number.toString().padStart(3, '0');
+
+        // Note: PIST XML often returns French metadata even with ln=ar.
+        // We fetch both just in case, but usually titleAr might be same as titleFr.
+        // We rely on extractPdfUrl to generate the correct Arabic PDF link.
+
+        const urlFr = `${this.config.baseUrl}/search?ln=fr&as=1&cc=JORT&m1=a&p1=${paddedNumber}&f1=jortnumber&op1=a&m2=a&p2=${year}&f2=jortyear&op2=a&of=xd&rg=50`;
+        const urlAr = `${this.config.baseUrl}/search?ln=ar&as=1&cc=JORT&m1=a&p1=${paddedNumber}&f1=jortnumber&op1=a&m2=a&p2=${year}&f2=jortyear&op2=a&of=xd&rg=50`;
+
+        try {
+            const [respFr, respAr] = await Promise.all([
+                axios.get(urlFr, { timeout: 30000, headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' } }),
+                axios.get(urlAr, { timeout: 30000, headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' } })
+            ]);
+
+            const recordsFr = this.extractRecordsFromResponse(respFr.data);
+            const recordsAr = this.extractRecordsFromResponse(respAr.data);
+
+            console.log(`   └─ Found ${recordsFr.length} FR / ${recordsAr.length} AR records`);
+
+            // Map Arabic records
+            const arMap = new Map<string, ParsedEntry>();
+            for (const rec of recordsAr) {
+                const parsed = this.parseDublinCoreEntry(rec);
+                if (parsed) arMap.set(parsed.recordId, parsed);
+            }
+
+            let newCount = 0;
+            for (const recFr of recordsFr) {
+                const parsedFr = this.parseDublinCoreEntry(recFr);
+                if (parsedFr) {
+                    const parsedAr = arMap.get(parsedFr.recordId);
+
+                    // Use Arabic title ONLY if it actually has Arabic characters
+                    let titleAr = parsedAr?.titleFr;
+                    if (titleAr && !/[\u0600-\u06FF]/.test(titleAr)) {
+                        titleAr = undefined; // It's just French duplicate
+                    }
+
+                    const ministryAr = parsedAr?.ministry; // Same check could apply
+
+                    // Fallback: If titleAr is missing, we might use titleFr or leave null.
+                    // The UI will handle displaying titleFr if titleAr is missing.
+
+                    const isDup = await this.isDuplicate(parsedFr);
+                    if (!isDup) {
+                        const pdfs = await this.extractPdfUrl(parsedFr.recordId);
+
+                        await jortService.createEntry({
+                            titleFr: parsedFr.titleFr,
+                            titleAr: titleAr,
+                            ministry: parsedFr.ministry,
+                            ministryAr: ministryAr,
+                            type: parsedFr.type,
+                            date: parsedFr.date,
+                            pdfUrl: pdfs.pdfFr || undefined,
+                            pdfUrlAr: pdfs.pdfAr || undefined,
+                            recordId: parsedFr.recordId,
+                            jortNumber: pdfs.jortNumber || undefined,
+                        });
+                        newCount++;
+                    }
+                }
+            }
+            return newCount;
+
+        } catch (error: any) {
+            console.error(`❌ Error scraping specific jort ${number}/${year}:`, error.message);
+            return 0;
+        }
+    }
+
+    private extractRecordsFromResponse(xmlData: string): any[] {
+        if (!xmlData || (!xmlData.includes('<collection') && !xmlData.includes('<record'))) {
+            return [];
+        }
+        const jsonObj = this.xmlParser.parse(xmlData);
+        return this.extractDublinCoreRecords(jsonObj);
+    }
+
+    /**
+     * Scan for missing JORTs by checking sequence gaps
+     * Strategy:
+     * 1. Find latest JORT in database (by date)
+     * 2. Extract year and number (if available) or assume based on date
+     * 3. Propose next expected JORT (Latest + 1)
+     * 4. Try to fetch it using scrapeSpecificJort
+     * 5. Repeat until no more found (up to a limit)
+     */
+    async scanMissingJorts(): Promise<number> {
+        console.log('🕵️‍♀️ Starting Missing JORT Scan...');
+        let foundCount = 0;
+
+        try {
+            // 1. Get latest JORT entry
+            const latestEntry = await prisma.jortEntry.findFirst({
+                orderBy: { date: 'desc' },
+                where: { type: { in: ['Loi', 'Décret', 'Arrêté'] } } // Filter mainly for official texts
+            });
+
+            if (!latestEntry || !latestEntry.date) {
+                console.log('   └─ No previous entries found to base prediction on.');
+                return 0;
+            }
+
+            const currentYear = new Date().getFullYear();
+            const latestYear = latestEntry.date.getFullYear();
+
+            let lastNumber = 0;
+            if (latestEntry.jortNumber) {
+                lastNumber = parseInt(latestEntry.jortNumber, 10);
+            } else {
+                if (latestYear < currentYear) {
+                    lastNumber = 0;
+                } else {
+                    console.log('   └─ Cannot determine last JORT number (field is empty). Skipping gap scan.');
+                    return 0;
+                }
+            }
+
+            // If we are in a new year, start from 0
+            let targetYear = latestYear;
+            let startNumber = lastNumber + 1;
+
+            if (latestYear < currentYear) {
+                targetYear = currentYear;
+                startNumber = 1;
+            } else {
+                // Heuristic: If we are early in the year (e.g. Feb) and lastNumber > 100, 
+                // it implies we picked up a late publication from previous year that was mis-dated or just noise.
+                // Force a check from 1 if we have NO low numbers? 
+                // Better: Just clamp it. If we are in Feb, max JORT is probably ~20-30.
+                const currentMonth = new Date().getMonth() + 1;
+                if (currentMonth <= 2 && lastNumber > 50) {
+                    console.log(`   ⚠️ Suspiciously high JORT number (${lastNumber}) for early year. Resetting scan to 1.`);
+                    startNumber = 1;
+                    // We might want to scan up to current expected? 
+                    // Let's just start from 1 and scan until we hit failures.
+                }
+            }
+
+            console.log(`   └─ Latest known: Year ${latestYear}, Num ${lastNumber}. Scanning from ${targetYear}/${startNumber}...`);
+
+            // Try to fetch next numbers. 
+            // If we reset to 1, we might need to scan quite a few.
+            // Let's bump MAX_GAP_TRY to 10 to be safe, or higher if we successfully find some.
+            const MAX_GAP_TRY = 10;
+            let consecutiveFailures = 0;
+            let currentNumber = startNumber;
+
+            while (consecutiveFailures < MAX_GAP_TRY && currentNumber < 200) { // Safety cap 200
+                const numString = currentNumber.toString().padStart(3, '0');
+                const count = await this.scrapeSpecificJort(targetYear, numString);
+
+                if (count > 0) {
+                    console.log(`   ✅ Found missing JORT N°${numString}/${targetYear}!`);
+                    foundCount += count;
+                    consecutiveFailures = 0;
+                } else {
+                    console.log(`   ❌ JORT N°${numString}/${targetYear} not found.`);
+                    consecutiveFailures++;
+                }
+
+                currentNumber++;
+            }
+
+        } catch (error: any) {
+            console.error(`❌ Gap scan failed: ${error.message}`);
+        }
+
+        console.log(`🕵️‍♀️ Missing JORT Scan Complete: Found ${foundCount} entries.`);
+        return foundCount;
+    }
+
+    /**
+     * Scrape a specific collection
+     */
+    /**
      * Scrape a specific collection
      */
     private async scrapeCollection(collection: string): Promise<ParsedEntry[]> {
@@ -141,33 +328,48 @@ export class JortScraper {
 
         // Build search URL with XML export
         // Uses config.sortField (sf) and config.sortOrder (so)
-        const searchUrl = `${this.config.baseUrl}/search?cc=${collection}&sf=${this.config.sortField}&so=${this.config.sortOrder}&rg=${this.config.resultsPerPage}&of=xd`;
+        const baseUrl = `${this.config.baseUrl}/search?cc=${collection}&sf=${this.config.sortField}&so=${this.config.sortOrder}&rg=${this.config.resultsPerPage}&of=xd`;
+        const urlFr = `${baseUrl}&ln=fr`;
+        const urlAr = `${baseUrl}&ln=ar`;
 
-        console.log(`📡 Fetching: ${searchUrl}`);
+        console.log(`📡 Fetching Collection: ${collection}`);
+        console.log(`   FR: ${urlFr}`);
+        console.log(`   AR: ${urlAr}`);
 
         try {
-            const response = await axios.get(searchUrl, {
-                timeout: 30000,
-                headers: {
-                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-                },
-            });
+            const [respFr, respAr] = await Promise.all([
+                axios.get(urlFr, { timeout: 30000, headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' } }),
+                axios.get(urlAr, { timeout: 30000, headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' } })
+            ]);
 
-            const xmlData = response.data;
-            const parsed = this.xmlParser.parse(xmlData);
+            const recordsFr = this.extractRecordsFromResponse(respFr.data);
+            const recordsAr = this.extractRecordsFromResponse(respAr.data);
 
-            // Extract total count from XML comment (if available)
-            const totalMatch = xmlData.match(/Search-Engine-Total-Number-Of-Results:\s*(\d+)/);
-            const totalResults = totalMatch ? parseInt(totalMatch[1]) : 0;
-            console.log(`📊 Total results in collection: ${totalResults}`);
+            console.log(`📊 Found ${recordsFr.length} FR / ${recordsAr.length} AR records`);
 
-            // Parse Dublin Core records
-            const dcRecords = this.extractDublinCoreRecords(parsed);
+            // Map Arabic records
+            const arMap = new Map<string, ParsedEntry>();
+            for (const rec of recordsAr) {
+                const parsed = this.parseDublinCoreEntry(rec);
+                if (parsed) arMap.set(parsed.recordId, parsed);
+            }
 
-            for (const dc of dcRecords) {
-                const entry = this.parseDublinCoreEntry(dc);
-                if (entry) {
-                    entries.push(entry);
+            for (const recFr of recordsFr) {
+                const parsedFr = this.parseDublinCoreEntry(recFr);
+                if (parsedFr) {
+                    const parsedAr = arMap.get(parsedFr.recordId);
+
+                    // Merge AR data (Title/Ministry)
+                    if (parsedAr) {
+                        if (parsedAr.titleFr && /[\u0600-\u06FF]/.test(parsedAr.titleFr)) {
+                            parsedFr.titleAr = parsedAr.titleFr;
+                        }
+                        if (parsedAr.ministry) {
+                            parsedFr.ministryAr = parsedAr.ministry;
+                        }
+                    }
+
+                    entries.push(parsedFr);
                 }
             }
 
@@ -183,8 +385,9 @@ export class JortScraper {
 
     /**
      * Extract PDF URL from record detail page (FR and AR)
+     * Also extracts JORT number from PDF filename if possible (e.g. Jo0182026.pdf -> 018)
      */
-    private async extractPdfUrl(recordId: string): Promise<{ pdfFr: string | null, pdfAr: string | null }> {
+    private async extractPdfUrl(recordId: string): Promise<{ pdfFr: string | null, pdfAr: string | null, jortNumber: string | null }> {
         try {
             const detailUrl = `${this.config.baseUrl}/record/${recordId}?ln=fr`;
             const response = await axios.get(detailUrl, {
@@ -195,19 +398,23 @@ export class JortScraper {
             });
 
             const html = response.data;
-            const pdfFrPattern = /href="([^"]*\/jort\/[^"]*\/(?:Jo|Ja)[^"]*\.pdf)"/i;
-            const pdfArPattern = /href="([^"]*\/jort\/[^"]*\/(?:Ja|Jo)[^"]*\.pdf)"/i; // Often Ja is Arabic, need to be careful
-
-            // Better strategy: capture all PDF links and try to classify
             const allPdfMatches = [...html.matchAll(/href="([^"]+\.pdf)"/g)];
 
             let pdfFr: string | null = null;
             let pdfAr: string | null = null;
+            let jortNumber: string | null = null;
 
             for (const match of allPdfMatches) {
                 let url = match[1];
                 if (!url.startsWith('http')) {
                     url = `${this.config.baseUrl}${url.startsWith('/') ? '' : '/'}${url}`;
+                }
+
+                // Extract JORT Number from filename if possible
+                // Pattern: Jo0182026.pdf or Ja0182026.pdf
+                const filenameMatch = url.match(/(?:Jo|Ja)(\d{3})(\d{4})\.pdf/i);
+                if (filenameMatch) {
+                    jortNumber = filenameMatch[1];
                 }
 
                 if (url.includes('/Jo') || url.toLowerCase().includes('fr')) {
@@ -224,12 +431,50 @@ export class JortScraper {
                     url = `${this.config.baseUrl}${url.startsWith('/') ? '' : '/'}${url}`;
                 }
                 pdfFr = url;
+
+                // Try extract number again in fallback
+                const filenameMatch = pdfFr.match(/(?:Jo|Ja)(\d{3})(\d{4})\.pdf/i);
+                if (filenameMatch) {
+                    jortNumber = filenameMatch[1];
+                }
             }
 
-            return { pdfFr, pdfAr };
+            // Verify if PDF links are actually reachable
+            if (pdfFr) {
+                const isValid = await this.verifyPdfLink(pdfFr);
+                if (!isValid) {
+                    console.warn(`⚠️  PDF Link found but unreachable (404): ${pdfFr}`);
+                    pdfFr = null;
+                }
+            }
+            if (pdfAr) {
+                const isValid = await this.verifyPdfLink(pdfAr);
+                if (!isValid) {
+                    console.warn(`⚠️  Arabic PDF Link found but unreachable (404): ${pdfAr}`);
+                    pdfAr = null;
+                }
+            }
+
+            return { pdfFr, pdfAr, jortNumber };
         } catch (error: any) {
             console.warn(`⚠️  Failed to extract PDF for record ${recordId}: ${error.message}`);
-            return { pdfFr: null, pdfAr: null };
+            return { pdfFr: null, pdfAr: null, jortNumber: null };
+        }
+    }
+
+    /**
+     * Verifies if a PDF link is reachable via HEAD request
+     */
+    private async verifyPdfLink(url: string): Promise<boolean> {
+        try {
+            await axios.head(url, {
+                timeout: 5000,
+                headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' },
+                validateStatus: (status) => status === 200
+            });
+            return true;
+        } catch (error) {
+            return false;
         }
     }
 
@@ -252,32 +497,86 @@ export class JortScraper {
      */
     private parseDublinCoreEntry(dc: any): ParsedEntry | null {
         try {
-            const title = dc['dc:title'];
-            const creator = dc['dc:creator'];
+            let rawTitle = dc['dc:title'];
+            let rawCreator = dc['dc:creator'];
             const date = dc['dc:date'];
             const identifier = dc['dc:identifier'];
 
-            if (!title || !identifier) {
+            if (!rawTitle || !identifier) {
                 return null;
             }
 
-            // Extract record ID from identifier (e.g., http://www.pist.tn/record/201575)
+            // Extract record ID
             const recordIdMatch = identifier.match(/\/record\/(\d+)/);
             const recordId = recordIdMatch ? recordIdMatch[1] : '';
 
-            // Separate French and Arabic from mixed title
-            const { titleFr, titleAr } = this.splitMixedTitle(title);
+            let titleFr = '';
+            let titleAr: string | undefined = undefined;
 
-            // Extract type from title (e.g., "Loi n°", "Décret n°", "Arrêté")
-            const type = this.extractType(titleFr);
+            // Handle title being an array (multiple dc:title tags) or string
+            if (Array.isArray(rawTitle)) {
+                // Heuristic: Arabic title contains Arabic chars, French doesn't (or has few)
+                const arIndex = rawTitle.findIndex((t: string) => /[\u0600-\u06FF]/.test(t));
+                if (arIndex !== -1) {
+                    titleAr = rawTitle[arIndex].trim();
+                    // Assume the other one is French, or join all others
+                    titleFr = rawTitle.filter((_, i) => i !== arIndex).join(' / ').trim();
+                } else {
+                    titleFr = rawTitle.join(' / ').trim();
+                }
+            } else {
+                // IDK if it's mixed or just one language
+                const split = this.splitMixedTitle(rawTitle);
+                titleFr = split.titleFr;
+                titleAr = split.titleAr;
+            }
 
-            // Extract ministry from creator or title
-            const ministry = creator || this.extractMinistry(titleFr);
+            // Similar logic for Creator (Ministry)
+            let ministry: string | undefined = undefined;
+            let ministryAr: string | undefined = undefined;
+
+            if (Array.isArray(rawCreator)) {
+                const arIndex = rawCreator.findIndex((c: string) => /[\u0600-\u06FF]/.test(c));
+                if (arIndex !== -1) {
+                    ministryAr = rawCreator[arIndex].trim();
+                    ministry = rawCreator.filter((_, i) => i !== arIndex).join(' / ').trim();
+                } else {
+                    ministry = rawCreator.join(' / ').trim();
+                }
+            } else {
+                ministry = rawCreator;
+            }
+
+            // Extract type
+            let type = this.extractType(titleFr);
+            if (!type && titleAr) {
+                type = this.extractTypeAr(titleAr);
+            }
+
+            // Fallback for ministry extraction from title if creator was empty/insufficient
+            if (!ministry) {
+                ministry = this.extractMinistry(titleFr);
+            }
+            if (!ministryAr && titleAr) {
+                ministryAr = this.extractMinistryAr(titleAr);
+            }
+
+            // If we have an Arabic ministry but no French one, use it as fallback? 
+            // Better to keep them separate in DB, but JortEntry.ministry is the primary display.
+            // If ministry is empty but ministryAr exists, maybe fill ministry with translated/transliterated or just keep empty?
+            // For now, let's allow ministry to be empty if only Arabic is present, or fill it.
+            if (!ministry && ministryAr) {
+                // ministry = ministryAr; // Optional: use Arabic as fallback for main field
+            }
+            if (!ministry && ministryAr) {
+                ministry = ministryAr; // Fallback to Arabic ministry name if French is missing
+            }
 
             return {
                 titleFr,
                 titleAr,
                 ministry,
+                ministryAr,
                 type,
                 date: date || undefined,
                 recordId,
@@ -314,7 +613,7 @@ export class JortScraper {
     }
 
     /**
-     * Extract document type from title
+     * Extract document type from title (French)
      */
     private extractType(title: string): string | undefined {
         const typePatterns = [
@@ -324,6 +623,7 @@ export class JortScraper {
             { pattern: /^Arrêté/i, type: 'Arrêté' },
             { pattern: /^Circulaire/i, type: 'Circulaire' },
             { pattern: /^Convention/i, type: 'Convention' },
+            { pattern: /^Décision/i, type: 'Décision' },
         ];
 
         for (const { pattern, type } of typePatterns) {
@@ -331,6 +631,46 @@ export class JortScraper {
                 return type;
             }
         }
+
+        return undefined;
+    }
+
+    /**
+     * Extract document type from title (Arabic)
+     */
+    private extractTypeAr(title: string): string | undefined {
+        const typePatterns = [
+            { pattern: /^قانون (?:أنساسي|دستوري)?/i, type: 'Loi' }, // Law
+            { pattern: /^مرسوم/i, type: 'Décret-Loi' }, // Decree-Law
+            { pattern: /^أمر (?:رئاسي|حكومي)?/i, type: 'Décret' }, // Decree
+            { pattern: /^قرار/i, type: 'Arrêté' }, // Order
+            { pattern: /^منشور/i, type: 'Circulaire' }, // Circular
+            { pattern: /^اتفاقية/i, type: 'Convention' }, // Convention
+        ];
+
+        for (const { pattern, type } of typePatterns) {
+            if (pattern.test(title)) {
+                return type;
+            }
+        }
+
+        return undefined;
+    }
+
+    /**
+     * Extract ministry from title (Arabic)
+     * Heuristic: Look for "من وزير..." or "من رئيس..."
+     */
+    private extractMinistryAr(title: string): string | undefined {
+        // Pattern 1: Explicit "from Minister of X"
+        // Example: "قرار من وزير الداخلية..."
+        const fromMinisterMatch = title.match(/قرار من (وزير|كاتب دولة) ([\u0600-\u06FF ]+)/);
+        if (fromMinisterMatch) {
+            return `${fromMinisterMatch[1]} ${fromMinisterMatch[2]}`.trim();
+        }
+
+        // Pattern 2: "Order of the Minister of..."
+        // A bit harder in Arabic without specific "from", usually starts with Type
 
         return undefined;
     }
@@ -372,10 +712,53 @@ export class JortScraper {
             let updated = false;
             const updateData: any = {};
 
-            // Check if we need to backfill recordId
+            // Backfill recordId
             if (!existing.recordId && entry.recordId) {
                 console.log(`🔄 Backfilling recordId for: ${entry.titleFr.substring(0, 30)}...`);
                 updateData.recordId = entry.recordId;
+                updated = true;
+            }
+
+            // Backfill Arabic Title if missing (Self-Healing)
+            if (!existing.titleAr && !entry.titleAr && (existing.recordId || entry.recordId)) {
+                const targetRecordId = existing.recordId || entry.recordId;
+                console.log(`🌍 Backfilling Arabic Title for: ${targetRecordId}...`);
+                // Add a small delay
+                await new Promise(resolve => setTimeout(resolve, 500));
+
+                const detailData = await this.extractDetailsFromPage(targetRecordId!);
+                if (detailData.titleAr) {
+                    updateData.titleAr = detailData.titleAr;
+                    updated = true;
+                    console.log(`   └─ Found Title AR: ${detailData.titleAr.substring(0, 30)}...`);
+                }
+                if (detailData.ministryAr && !existing.ministryAr) {
+                    updateData.ministryAr = detailData.ministryAr;
+                    updated = true;
+                }
+            } else if (!existing.titleAr && entry.titleAr) {
+                updateData.titleAr = entry.titleAr;
+                updated = true;
+            }
+
+            // Backfill recordId
+            if (!existing.recordId && entry.recordId) {
+                console.log(`🔄 Backfilling recordId for: ${entry.titleFr.substring(0, 30)}...`);
+                updateData.recordId = entry.recordId;
+                updated = true;
+            }
+
+            // Backfill Ministry Ar
+            if (!existing.ministryAr && entry.ministryAr) {
+                console.log(`🔄 Backfilling ministryAr for: ${entry.titleFr.substring(0, 30)}...`);
+                updateData.ministryAr = entry.ministryAr;
+                updated = true;
+            }
+
+            // Backfill Type if missing
+            if (!existing.type && entry.type) {
+                console.log(`🔄 Backfilling type for: ${entry.titleFr.substring(0, 30)}...`);
+                updateData.type = entry.type;
                 updated = true;
             }
 
@@ -388,11 +771,16 @@ export class JortScraper {
                 // Add a small delay to respect server
                 await new Promise(resolve => setTimeout(resolve, 500));
 
-                const pdfUrl = await this.extractPdfUrl(targetRecordId);
-                if (pdfUrl) {
-                    updateData.pdfUrl = pdfUrl;
+                const pdfUrls = await this.extractPdfUrl(targetRecordId!);
+                if (pdfUrls.pdfFr) {
+                    updateData.pdfUrl = pdfUrls.pdfFr;
                     updated = true;
-                    console.log(`   └─ Found PDF: ${pdfUrl}`);
+                    console.log(`   └─ Found PDF FR: ${pdfUrls.pdfFr}`);
+                }
+                if (pdfUrls.pdfAr) {
+                    updateData.pdfUrlAr = pdfUrls.pdfAr;
+                    updated = true;
+                    console.log(`   └─ Found PDF AR: ${pdfUrls.pdfAr}`);
                 }
             }
 
@@ -406,6 +794,45 @@ export class JortScraper {
         }
 
         return false;
+    }
+
+    /**
+     * Extract details from the record page (when Dublin Core is incomplete)
+     */
+    private async extractDetailsFromPage(recordId: string): Promise<{ titleAr?: string, ministryAr?: string }> {
+        try {
+            const detailUrl = `${this.config.baseUrl}/record/${recordId}?ln=ar`; // Request Arabic version
+            const response = await axios.get(detailUrl, {
+                timeout: 10000,
+                headers: {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+                },
+            });
+
+            const html = response.data;
+            const result: { titleAr?: string, ministryAr?: string } = {};
+
+            // Heuristic extraction from HTML structure
+            // Look for title in metadata table (simplified regex)
+            // Example: <td class="metadataFieldValue">...Arabic Title...</td>
+            const titleMatch = html.match(/<td[^>]*class="metadataFieldValue"[^>]*>\s*([^\n<]+[\u0600-\u06FF][^\n<]+)\s*<\/td>/i);
+            if (titleMatch) {
+                result.titleAr = titleMatch[1].trim();
+            }
+
+            // Try to extract Ministry from Arabic text if possible
+            if (result.titleAr) {
+                const ministryMatch = result.titleAr.match(/(?:وزير|كاتب دولة) ([^،,]+)/);
+                if (ministryMatch) {
+                    result.ministryAr = `وزارة ${ministryMatch[1].trim()}`;
+                }
+            }
+
+            return result;
+        } catch (error) {
+            console.warn(`Failed to extract details for ${recordId}`);
+            return {};
+        }
     }
 
     /**

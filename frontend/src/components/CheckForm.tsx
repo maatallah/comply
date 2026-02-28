@@ -2,10 +2,11 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useApi } from '../hooks/useApi';
 import EvidenceUpload from './EvidenceUpload';
+import LocaleDateInput from './LocaleDateInput';
 import ActionItemList from './ActionItemList';
 import CheckHistory from './CheckHistory';
 import ConfirmModal from './ConfirmModal';
-import { FileText, Trash2, Eye, X, Save } from 'lucide-react';
+import { FileText, Trash2, Eye, Save } from 'lucide-react';
 
 interface CheckFormProps {
     controlId: string;
@@ -15,7 +16,7 @@ interface CheckFormProps {
 }
 
 export default function CheckForm({ controlId, initialData, onSave, onCancel }: CheckFormProps) {
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
     const api = useApi();
 
     const [status, setStatus] = useState<'PASS' | 'FAIL' | 'PARTIAL' | 'NOT_APPLICABLE'>(initialData?.status || 'PASS');
@@ -110,22 +111,78 @@ export default function CheckForm({ controlId, initialData, onSave, onCancel }: 
             </div>
 
             <div className="form-group">
-                <label className="form-label">
-                    {t('checks.findings')} <span style={{ color: 'var(--gray-400)', fontWeight: 400, fontSize: '0.875rem' }}>/ النتائج</span>
+                <label className="form-label" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '0.75rem' }}>
+                    <span>
+                        {t('checks.findings')} <span style={{ color: 'var(--gray-400)', fontWeight: 400, fontSize: '0.875rem' }}>/ النتائج</span>
+                    </span>
+                    <div style={{ display: 'flex', gap: '0.25rem', flexWrap: 'wrap' }}>
+                        {[
+                            { key: 'ras', fr: 'R.A.S.', ar: 'لا شيء يُذكر' },
+                            { key: 'minor', fr: 'Non-conformité mineure', ar: 'عدم مطابقة طفيفة' },
+                            { key: 'missing', fr: 'Document manquant', ar: 'وثيقة مفقودة' }
+                        ].map(template => {
+                            const label = i18n.language === 'ar' ? template.ar : template.fr;
+                            return (
+                                <button
+                                    key={template.key}
+                                    type="button"
+                                    className="btn btn-sm"
+                                    style={{
+                                        padding: '0.15rem 0.6rem',
+                                        fontSize: '0.75rem',
+                                        borderRadius: '12px',
+                                        background: 'var(--bg-primary)',
+                                        color: 'var(--text-secondary)',
+                                        border: '1px solid var(--border-color)',
+                                        cursor: 'pointer'
+                                    }}
+                                    onClick={() => setFindings((prev: string) => prev ? `${prev}\n- ${label}` : `- ${label}`)}
+                                    onMouseOver={(e) => { e.currentTarget.style.background = 'var(--bg-card-hover)'; e.currentTarget.style.color = 'var(--text-primary)'; }}
+                                    onMouseOut={(e) => { e.currentTarget.style.background = 'var(--bg-primary)'; e.currentTarget.style.color = 'var(--text-secondary)'; }}
+                                >
+                                    + {label}
+                                </button>
+                            );
+                        })}
+                    </div>
                 </label>
-                <textarea
-                    className="form-control"
-                    rows={3}
-                    value={findings}
-                    onChange={(e) => setFindings(e.target.value)}
-                    placeholder={t('checks.findingsPlaceholder')}
-                    style={{ width: '100%', resize: 'vertical' }}
-                    dir="auto"
-                />
+                <div style={{ position: 'relative', width: '100%' }}>
+                    <textarea
+                        className="form-control"
+                        rows={4}
+                        value={findings}
+                        onChange={(e) => setFindings(e.target.value)}
+                        placeholder={t('checks.findingsPlaceholder') || 'Décrivez vos constats ici...'}
+                        style={{
+                            width: '100%',
+                            minHeight: '100px',
+                            resize: 'vertical',
+                            padding: '1rem',
+                            backgroundColor: 'var(--bg-primary)',
+                            border: '1px solid var(--border-color)',
+                            borderRadius: '8px',
+                            fontSize: '0.95rem',
+                            lineHeight: '1.5',
+                            boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.05)',
+                            transition: 'border-color 0.2s, background-color 0.2s',
+                            boxSizing: 'border-box'
+                        }}
+                        dir="auto"
+                        onFocus={(e) => {
+                            e.target.style.backgroundColor = 'var(--bg-card)';
+                            e.target.style.borderColor = 'var(--primary)';
+                            e.target.style.outline = 'none';
+                        }}
+                        onBlur={(e) => {
+                            e.target.style.backgroundColor = 'var(--bg-primary)';
+                            e.target.style.borderColor = 'var(--border-color)';
+                        }}
+                    />
+                </div>
             </div>
 
             {(status === 'FAIL' || status === 'PARTIAL') && (
-                <div className="form-group action-plan-box" style={{ background: '#fff1f1', padding: '1rem', borderRadius: 'var(--radius)', border: '1px solid #fee2e2' }}>
+                <div className="form-group action-plan-box" style={{ background: 'var(--bg-danger-light)', padding: '1rem', borderRadius: 'var(--radius)', border: '1px solid var(--border-color)', marginTop: '1rem' }}>
                     {initialData?.id ? (
                         <ActionItemList
                             checkId={initialData.id}
@@ -157,11 +214,10 @@ export default function CheckForm({ controlId, initialData, onSave, onCancel }: 
 
             <div className="form-group">
                 <label className="form-label">{t('checks.nextCheckDate')}</label>
-                <input
-                    type="date"
-                    className="form-control"
+                <LocaleDateInput
                     value={nextCheckDate}
-                    onChange={(e) => setNextCheckDate(e.target.value)}
+                    onChange={(val) => setNextCheckDate(val)}
+                    className="form-control"
                 />
             </div>
 
@@ -171,7 +227,7 @@ export default function CheckForm({ controlId, initialData, onSave, onCancel }: 
                 {evidenceList.length > 0 && (
                     <div style={{ marginBottom: '1rem', display: 'grid', gap: '0.5rem' }}>
                         {evidenceList.map((ev, idx) => (
-                            <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem', background: '#fff', border: '1px solid var(--gray-200)', borderRadius: 'var(--radius)' }}>
+                            <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem', background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius)' }}>
                                 {ev.fileType?.startsWith('image/') ? (
                                     <img
                                         src={`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/evidence/file/${ev.id}`}
@@ -219,7 +275,7 @@ export default function CheckForm({ controlId, initialData, onSave, onCancel }: 
                                 <button
                                     type="button"
                                     className="btn-icon danger"
-                                    onClick={() => handleRemoveEvidence(ev.id, idx)}
+                                    onClick={() => handleRemoveEvidence(ev.id)}
                                     title={t('evidence.remove')}
                                     style={{ color: 'var(--danger)' }}
                                 >

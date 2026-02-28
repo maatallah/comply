@@ -63,6 +63,11 @@ model User {
   company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
   checks  Check[]
   alerts  Alert[]
+  
+  // Audit Relations
+  ledAudits      Audit[] @relation("LeadAuditor")
+  teamAudits     Audit[] @relation("AuditTeam")
+  assignedActions CorrectiveAction[]
 
   @@map("users")
 }
@@ -166,6 +171,10 @@ model Check {
   alerts    Alert[]
 
   actions   ActionItem[]
+  
+  auditId   String?  @map("audit_id")
+  audit     Audit?   @relation(fields: [auditId], references: [id], onDelete: Cascade)
+
   @@map("checks")
 }
 
@@ -254,25 +263,94 @@ model Alert {
 
 // ==================== AUDITS ====================
 
+model AuditType {
+  id            String   @id @default(uuid())
+  name          String   @unique // e.g., "BSCI Full Audit", "Internal HSE Inspection"
+  nameAr        String?  @map("name_ar")
+  category      String   // SOCIAL, HSE, QUALITY, BRAND, SECURITY
+  scope         String   @default("EXTERNAL") // EXTERNAL, INTERNAL
+  frequency     Int?     // Frequency in months (optional default)
+  description   String?  @db.Text
+  descriptionAr String?  @map("description_ar") @db.Text
+  checklistIds  String[] @default([]) // IDs of checklists/questionnaires (future)
+  isActive      Boolean  @default(true) @map("is_active")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  audits        Audit[]
+
+  @@map("audit_types")
+}
+
 model Audit {
   id            String   @id @default(uuid())
   companyId     String   @map("company_id")
-  auditType     String   @map("audit_type") // BSCI, DISNEY, FIRE_SAFETY, etc.
-  auditor       String   // Company name or inspector
+  auditTypeId   String   @map("audit_type_id")
+  
+  // Scheduling
   scheduledDate DateTime @map("scheduled_date")
-  completedDate DateTime? @map("completed_date")
-  status        String   @default("SCHEDULED") // SCHEDULED, IN_PROGRESS, COMPLETED, FAILED
-  score         Int?     // 0-100 if applicable
-  findings      String?  @db.Text
+  performedDate DateTime? @map("performed_date")
+  
+  // Auditor Info
+  auditorName   String?  @map("auditor_name") // For external: "SGS", "Intertek"
+  
+  // Internal Audit Team
+  leadAuditorId String? @map("lead_auditor_id") // Main internal auditor
+  
+  // Status & Results
+  status        String   @default("SCHEDULED") // SCHEDULED, IN_PROGRESS, COMPLETED, CANCELLED
+  score         Float?   // Numeric score (0-100) or rating (1-5)
+  ratingLabel   String?  @map("rating_label") // "A", "Green", "Compliant"
+  resultSummary String?  @map("result_summary") @db.Text
+  
+  // Artifacts
   reportUrl     String?  @map("report_url")
+  
+  // Follow-up
   nextAuditDue  DateTime? @map("next_audit_due")
+  
   createdAt     DateTime @default(now()) @map("created_at")
   updatedAt     DateTime @updatedAt @map("updated_at")
 
   // Relations
-  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  company     Company    @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  auditType   AuditType  @relation(fields: [auditTypeId], references: [id])
+  leadAuditor User?      @relation("LeadAuditor", fields: [leadAuditorId], references: [id])
+  auditTeam   User[]     @relation("AuditTeam")
+  
+  correctiveActions CorrectiveAction[]
+  checks            Check[]
 
   @@map("audits")
+}
+
+model CorrectiveAction {
+  id            String   @id @default(uuid())
+  auditId       String   @map("audit_id")
+  
+  // Finding Details
+  reference     String?  // e.g., "NC-2026-001"
+  description   String   @db.Text
+  severity      String   @default("MAJOR") // MINOR, MAJOR, CRITICAL
+  
+  // Action Plan
+  actionPlan    String?  @map("action_plan") @db.Text
+  assignedTo    String?  @map("assigned_to") // User ID
+  dueDate       DateTime? @map("due_date")
+  
+  // Status
+  status        String   @default("OPEN") // OPEN, IN_PROGRESS, RESOLVED, VERIFIED
+  completedAt   DateTime? @map("completed_at")
+  verifiedAt    DateTime? @map("verified_at")
+  
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  audit      Audit    @relation(fields: [auditId], references: [id], onDelete: Cascade)
+  assignee   User?    @relation(fields: [assignedTo], references: [id])
+
+  @@map("corrective_actions")
 }
 
 // ==================== REGULATORY WATCH ====================
@@ -284,8 +362,8 @@ model JortEntry {
   ministry     String?  // Ministry or Entity extracted (French)
   ministryAr   String?  @map("ministry_ar") // Ministry extracted (Arabic)
   type         String?  // Decree, Law, Order, etc.
-  jortNumber   String?  @map("jort_number")
-  recordId     String?  @unique @map("record_id") // PIST ID for linking
+  jortNumber   String?  @map("jort_number") // e.g. "018", "123"
+  recordId     String   @unique @map("record_id") // PIST record ID for linking
   date         DateTime?
   pdfUrl       String?  @map("pdf_url") // French PDF
   pdfUrlAr     String?  @map("pdf_url_ar") // Arabic PDF

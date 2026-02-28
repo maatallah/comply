@@ -22,8 +22,11 @@ export const CompanySize = {
 // ==================== VALIDATORS ====================
 
 // Tunisia Tax ID: XXXXXXX/X/A/M/XXX (7 digits / letter / letter / letter / 3 digits)
+// Allowing looser format for legacy data or easier entry (case insensitive)
 export function validateTaxId(taxId: string): boolean {
-    const regex = /^\d{7}\/[A-Z]\/[A-Z]\/[A-Z]\/\d{3}$/;
+    // Standard format (strict): /^\d{7}\/[A-Z]\/[A-Z]\/[A-Z]\/\d{3}$/
+    // Relaxed: Allow lowercase, allow just the 7 digits for now if needed, but let's stick to the structure but case insensitive
+    const regex = /^\d{7}\/[A-Za-z]\/[A-Za-z]\/[A-Za-z]\/\d{3}$/;
     return regex.test(taxId);
 }
 
@@ -33,9 +36,10 @@ export function validateCnssId(cnssId: string): boolean {
     return regex.test(cnssId);
 }
 
-// Tunisia phone: +216XXXXXXXX (8 digits after +216)
+// Tunisia phone: +216XXXXXXXX (8 digits after +216) OR just 8 digits
 export function validateTunisiaPhone(phone: string): boolean {
-    const regex = /^\+216[2-9]\d{7}$/;
+    // Allow optional +216 prefix, then 8 digits (starting with 2-9)
+    const regex = /^(\+216)?[2-9]\d{7}$/;
     return regex.test(phone);
 }
 

@@ -79,13 +79,17 @@ export class DeadlineRepository {
 
     // Update
     async update(id: string, data: UpdateDeadlineInput): Promise<Deadline> {
+        const updateData: any = {
+            status: data.status,
+            completedAt: data.completedAt ? new Date(data.completedAt) :
+                data.status === 'COMPLETED' ? new Date() : undefined,
+        };
+        if (data.dueDate) updateData.dueDate = new Date(data.dueDate);
+        if (data.isRecurring !== undefined) updateData.isRecurring = data.isRecurring;
+
         return prisma.deadline.update({
             where: { id },
-            data: {
-                status: data.status,
-                completedAt: data.completedAt ? new Date(data.completedAt) :
-                    data.status === 'COMPLETED' ? new Date() : undefined,
-            },
+            data: updateData,
             include: {
                 obligation: {
                     select: { id: true, titleFr: true },

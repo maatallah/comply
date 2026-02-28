@@ -7,17 +7,96 @@ const fr = {
         // Navigation
         nav: {
             dashboard: 'Tableau de bord',
+            audits: 'Audits',
             obligations: 'Obligations',
             controls: 'Contrôles',
             deadlines: 'Échéances',
-            regulations: 'Réglementations',
+            regulations: 'Textes Réglementaires',
             alerts: 'Alertes',
             checks: 'Vérifications',
-            actionPlans: 'Plans d\'Action',
+            actionPlans: 'Plans d\'action',
             jortFeed: 'Veille JORT',
             profile: 'Profil',
             settings: 'Paramètres',
             logout: 'Déconnexion',
+            lightMode: 'Mode Clair',
+            darkMode: 'Mode Sombre',
+            switchToLightMode: 'Passer au mode clair',
+            switchToDarkMode: 'Passer au mode sombre',
+        },
+        audit: {
+            title: 'Audits & Inspections',
+            subtitle: 'Gérez vos audits de conformité internes et externes',
+            new: 'Nouvel Audit',
+            noData: 'Aucun audit trouvé.',
+            score: 'Score',
+            status: 'Statut',
+            type: 'Type d\'audit',
+            scope: 'Portée',
+            auditor: 'Auditeur',
+            date: 'Date prévue',
+            overview: 'Vue d\'ensemble',
+            checklist: 'Liste de contrôle',
+            tabs: {
+                overview: 'Vue d\'ensemble',
+                checklist: 'Liste de contrôle',
+                actions: 'Plans d\'action'
+            },
+            statusValues: {
+                ALL: 'Tous',
+                SCHEDULED: 'Planifié',
+                IN_PROGRESS: 'En cours',
+                COMPLETED: 'Terminé',
+                OVERDUE: 'En retard',
+                CANCELLED: 'Annulé'
+            },
+            confirmStart: 'Démarrer cet audit ? La liste de contrôle sera générée.',
+            confirmComplete: 'Terminer cet audit ? Le score de conformité sera calculé.',
+            back: 'Retour aux audits',
+            notFound: 'Audit introuvable',
+            start: 'Démarrer l\'Audit',
+            starting: 'Démarrage...',
+            complete: 'Terminer l\'Audit',
+            completing: 'Finalisation...',
+            scopeValues: {
+                INTERNAL: 'Interne',
+                EXTERNAL: 'Externe'
+            },
+            checklistNotStarted: 'L\'audit n\'est pas encore démarré. Les points de contrôle seront générés au démarrage.',
+            checklistEmpty: 'Aucun point de contrôle n\'a été généré pour cet audit.',
+            conform: 'Conforme',
+            nonConform: 'Non Conforme',
+            findingsPlaceholder: 'Décrire la non-conformité...',
+            actionsComingSoon: 'Actions Correctives (Bientôt disponible)',
+            failedStart: 'Échec du démarrage de l\'audit',
+            failedComplete: 'Échec de la finalisation de l\'audit',
+            leadAuditorLabel: 'Auditeur Principal',
+            creatorAsLead: 'En tant que créateur, vous serez assigné comme Auditeur Principal.',
+            schedule: 'Planifier l\'Audit',
+            scheduling: 'Création...',
+            createError: 'Erreur lors de la création de l\'audit',
+            createFailed: 'Échec de la création de l\'audit',
+            actions: {
+                new: 'Nouvelle Action',
+                description: 'Description de la non-conformité',
+                severity: 'Sévérité',
+                assignee: 'Responsable',
+                dueDate: 'Échéance',
+                status: 'Statut',
+                create: 'Créer l\'action',
+                noData: 'Aucune action corrective définie.',
+                severityValues: {
+                    MINOR: 'Mineure',
+                    MAJOR: 'Majeure',
+                    CRITICAL: 'Critique'
+                },
+                statusValues: {
+                    OPEN: 'Ouvert',
+                    IN_PROGRESS: 'En cours',
+                    RESOLVED: 'Résolu',
+                    VERIFIED: 'Vérifié'
+                }
+            }
         },
         roles: {
             SUPER_ADMIN: 'Super Administrateur',
@@ -54,6 +133,12 @@ const fr = {
             highRisk: 'Haut Risque',
             viewChart: 'Graphique',
             viewTable: 'Tableau',
+            exportPdf: 'Exporter PDF',
+            exporting: 'Export...',
+            viewAll: 'Voir tout',
+            noJortEntries: 'Aucune nouvelle publication détectée.',
+            onTrack: 'OK',
+            loadError: 'Échec du chargement des données',
         },
         // Obligations
         obligations: {
@@ -100,18 +185,27 @@ const fr = {
             action: 'Action',
             noData: 'Aucune échéance planifiée',
             noDataHint: 'Les échéances seront créées pour vos obligations',
+            timeline: 'Prochaines échéances',
+            noUpcoming: 'Aucune échéance à venir',
         },
         // Status
         status: {
             pending: 'En attente',
+            inProgress: 'En cours',
             completed: 'Terminé',
             overdue: 'En retard',
+            start: 'Démarrer',
+            complete: 'Terminer',
+            PENDING: 'En attente',
+            IN_PROGRESS: 'En cours',
+            COMPLETED: 'Terminé',
         },
         // Frequencies
         frequency: {
             CONTINUOUS: 'Continu',
             MONTHLY: 'Mensuel',
             QUARTERLY: 'Trimestriel',
+            SEMI_ANNUAL: 'Semestriel',
             ANNUAL: 'Annuel',
             BIENNIAL: 'Biennal',
             TRIENNIAL: 'Triennal',
@@ -136,9 +230,6 @@ const fr = {
         controlType: {
             DOCUMENT: 'Document',
             CERTIFICATION: 'Certification',
-            INSPECTION: 'Inspection',
-            TRAINING: 'Formation',
-            DECLARATION: 'Déclaration',
             AUDIT: 'Audit',
         },
         // Common
@@ -155,9 +246,11 @@ const fr = {
             filter: 'Filtrer',
             add: 'Ajouter',
             edit: 'Modifier',
+            select: 'Sélectionner...',
             close: 'Fermer',
             actions: 'Actions',
             status: 'Statut',
+            date: 'Date',
             required: 'Champ obligatoire',
             selected: 'sélectionné(s)',
             selectAll: 'Tout sélectionner',
@@ -169,7 +262,19 @@ const fr = {
             send: 'Envoyer',
             all: '(Tout)',
             sendReport: 'Envoyer le rapport par email',
+            details: 'Détails',
             viewDetails: 'Voir les détails',
+            year: 'Année',
+            month: 'Mois',
+            back: 'Retour',
+        },
+        user: {
+            roles: {
+                SUPER_ADMIN: 'Super Administrateur',
+                COMPANY_ADMIN: 'Administrateur',
+                PILOT: 'Pilote',
+                VIEWER: 'Observateur'
+            }
         },
         // Regulatory
         regulatory: {
@@ -184,6 +289,23 @@ const fr = {
             downloadPdf: 'Télécharger le PDF officiel',
             viewOnPist: 'Voir sur PIST.tn',
             linkUnavailable: 'Lien non disponible',
+            scrapeNow: 'Lancer le scraping',
+            scraping: 'Scraping en cours...',
+            scrapeSuccess: 'Scraping réussi : {{new}} nouveaux, {{duplicates}} doublons.',
+            scrapeError: 'Erreur lors du scraping',
+            noiseFilter: {
+                label: 'Niveau de filtrage',
+                low: 'Toléré',
+                medium: 'Recommandé',
+                high: 'Sévère',
+                tooltips: {
+                    low: 'Affiche tout le contenu (Veille brute).',
+                    medium: 'Masque les actes administratifs (nominations, démissions...).',
+                    high: 'Masque les actes administratifs et les ministères non économiques.',
+                }
+            },
+            noTitle: 'Texte sans titre',
+            defaultType: 'Texte'
         },
         // Checks & Action Plans
         checks: {
@@ -202,6 +324,10 @@ const fr = {
             actionPlanHint: 'Une alerte sera générée automatiquement.',
             noActionsDefined: 'Aucune action définie',
             actionItems: 'Actions à entreprendre',
+            actionPlaceholder: 'Décrire l\'action...',
+            saveToAddActions: 'Veuillez enregistrer la vérification pour ajouter des actions détaillées.',
+            history: 'Historique des vérifications',
+            loadingHistory: 'Chargement de l\'historique...',
         },
         checkStatus: {
             PASS: 'Conforme',
@@ -209,6 +335,7 @@ const fr = {
             PARTIAL: 'Partiel',
             PENDING: 'En attente',
             NOT_APPLICABLE: 'N/A',
+            ALL: 'Tous',
         },
         // Evidence
         evidence: {
@@ -263,6 +390,7 @@ const fr = {
             offshoreHint: 'Le régime "Totalement Exportateur" active les fonctionnalités spécifiques (Suspension TVA, Admission Temporaire).',
             cnssId: 'Numéro CNSS',
             address: 'Adresse',
+            phone: 'Téléphone',
             offshoreDeactivated: 'Les obligations Offshore ont été désactivées.',
             obligationsAdded: '{{count}} obligations spécifiques ajoutées.',
         },
@@ -295,6 +423,7 @@ const fr = {
             controlExists: 'Ce contrôle existe déjà',
             deadlineExists: 'Cette échéance existe déjà',
         },
+        // Articles
         articles: {
             title: 'Décomposition par Article',
             add: 'Ajouter un Article',
@@ -307,14 +436,98 @@ const fr = {
             validate: 'Valider',
             linkedObligations: 'Obligations liées',
         },
+        // Regulations (Details)
+        regulationDetails: {
+            backToRegulations: 'Retour aux textes',
+            textualInfo: 'Informations Textuelles',
+            issuingAuthority: 'Autorité Émettrice',
+            sectorTheme: 'Secteur / Thématique',
+            viewOfficialText: 'Consulter le texte officiel',
+            complianceDefinition: 'Ce texte définit les obligations de conformité pour votre entreprise.',
+        },
     },
 };
 
 // Arabic translations
 const ar = {
     translation: {
+        audit: {
+            title: 'التدقيق والتفتيش',
+            subtitle: 'إدارة عمليات تدقيق الامتثال الداخلية والخارجية',
+            new: 'تدقيق جديد',
+            noData: 'لم يتم العثور على أي تدقيق.',
+            score: 'النتيجة',
+            status: 'الحالة',
+            type: 'نوع التدقيق',
+            scope: 'النطاق',
+            auditor: 'المدقق',
+            date: 'التاريخ المخطط',
+            overview: 'نظرة عامة',
+            checklist: 'قائمة التحقق',
+            tabs: {
+                overview: 'نظرة عامة',
+                checklist: 'قائمة التحقق',
+                actions: 'خطط العمل'
+            },
+            statusValues: {
+                ALL: 'الكل',
+                SCHEDULED: 'مخطط',
+                IN_PROGRESS: 'جاري',
+                COMPLETED: 'مكتمل',
+                OVERDUE: 'متأخر',
+                CANCELLED: 'ملغى'
+            },
+            confirmStart: 'بدء هذا التدقيق؟ سيتم إنشاء قائمة التحقق.',
+            confirmComplete: 'إنهاء هذا التدقيق؟ سيتم احتساب درجة الامتثال.',
+            back: 'العودة إلى قائمة التدقيق',
+            notFound: 'لم يتم العثور على التدقيق',
+            start: 'بدء التدقيق',
+            starting: 'جار البدء...',
+            complete: 'إنهاء التدقيق',
+            completing: 'جار الإنتهاء...',
+            scopeValues: {
+                INTERNAL: 'داخلي',
+                EXTERNAL: 'خارجي'
+            },
+            checklistNotStarted: 'لم يبدأ التدقيق بعد. سيتم إنشاء نقاط المراقبة عند البدء.',
+            checklistEmpty: 'لم يتم إنشاء أي نقطة مراقبة لهذا التدقيق.',
+            conform: 'مطابق',
+            nonConform: 'غير مطابق',
+            findingsPlaceholder: 'وصف عدم المطابقة...',
+            actionsComingSoon: 'الإجراءات التصحيحية (قريباً)',
+            failedStart: 'فشل بدء التدقيق',
+            failedComplete: 'فشل إنهاء التدقيق',
+            leadAuditorLabel: 'المدقق الرئيسي',
+            creatorAsLead: 'بصفتك المنشئ، سيتم تعيينك كمدقق رئيسي.',
+            schedule: 'تخطيط التدقيق',
+            scheduling: 'جاري الإنشاء...',
+            createError: 'خطأ أثناء إنشاء التدقيق',
+            createFailed: 'فشل إنشاء التدقيق',
+            actions: {
+                new: 'إجراء جديد',
+                description: 'وصف عدم المطابقة',
+                severity: 'الخطورة',
+                assignee: 'المسؤول',
+                dueDate: 'تاريخ الاستحقاق',
+                status: 'الحالة',
+                create: 'إنشاء الإجراء',
+                noData: 'لم يتم تحديد أي إجراء تصحيحي.',
+                severityValues: {
+                    MINOR: 'طفيفة',
+                    MAJOR: 'كبيرة',
+                    CRITICAL: 'حرجة'
+                },
+                statusValues: {
+                    OPEN: 'مفتوح',
+                    IN_PROGRESS: 'قيد التنفيذ',
+                    RESOLVED: 'تم الحل',
+                    VERIFIED: 'تم التحقق'
+                }
+            }
+        },
         nav: {
             dashboard: 'لوحة التحكم',
+            audits: 'التدقيق',
             obligations: 'الالتزامات',
             controls: 'الضوابط',
             deadlines: 'المواعيد النهائية',
@@ -326,6 +539,18 @@ const ar = {
             profile: 'الملف الشخصي',
             settings: 'الإعدادات',
             logout: 'تسجيل الخروج',
+            lightMode: 'الوضع الفاتح',
+            darkMode: 'الوضع الداكن',
+            switchToLightMode: 'التبديل للوضع الفاتح',
+            switchToDarkMode: 'التبديل للوضع الداكن',
+        },
+        user: {
+            roles: {
+                SUPER_ADMIN: 'مسؤول رئيسي',
+                COMPANY_ADMIN: 'مدير النظام',
+                PILOT: 'طيار',
+                VIEWER: 'مشاهد'
+            }
         },
         roles: {
             SUPER_ADMIN: 'مدير عام',
@@ -360,6 +585,12 @@ const ar = {
             highRisk: 'عالي المخاطر',
             viewChart: 'رسم بياني',
             viewTable: 'جدول',
+            exportPdf: 'تصدير PDF',
+            exporting: 'جاري التصدير...',
+            viewAll: 'عرض الكل',
+            noJortEntries: 'لم يتم اكتشاف أي نشر جديد.',
+            onTrack: 'مستقر',
+            loadError: 'فشل تحميل البيانات',
         },
         obligations: {
             title: 'التزاماتي',
@@ -403,16 +634,25 @@ const ar = {
             action: 'الإجراء',
             noData: 'لا توجد مواعيد نهائية مخططة',
             noDataHint: 'سيتم إنشاء المواعيد النهائية لالتزاماتك',
+            timeline: 'المواعيد القادمة',
+            noUpcoming: 'لا توجد مواعيد قادمة',
         },
         status: {
             pending: 'قيد الانتظار',
+            inProgress: 'قيد التنفيذ',
             completed: 'مكتمل',
             overdue: 'متأخر',
+            start: 'ابدأ',
+            complete: 'أكمل',
+            PENDING: 'قيد الانتظار',
+            IN_PROGRESS: 'قيد التنفيذ',
+            COMPLETED: 'مكتمل',
         },
         frequency: {
             CONTINUOUS: 'مستمر',
             MONTHLY: 'شهري',
             QUARTERLY: 'ربع سنوي',
+            SEMI_ANNUAL: 'نصف سنوي',
             ANNUAL: 'سنوي',
             BIENNIAL: 'كل سنتين',
             TRIENNIAL: 'كل ثلاث سنوات',
@@ -440,7 +680,6 @@ const ar = {
             AUDIT: 'تدقيق',
         },
         common: {
-            generate: 'توليد بيانات اختبار',
             clear: 'مسح الكل',
             loading: 'جاري التحميل...',
             confirm: 'تأكيد',
@@ -452,9 +691,11 @@ const ar = {
             filter: 'تصفية',
             add: 'إضافة',
             edit: 'تعديل',
+            select: 'اختر...',
             close: 'إغلاق',
             actions: 'الإجراءات',
             status: 'الحالة',
+            date: 'تاريخ',
             required: 'حقل مطلوب',
             selected: 'محدد',
             selectAll: 'تحديد الكل',
@@ -466,22 +707,14 @@ const ar = {
             send: 'إرسال',
             all: '(الكل)',
             sendReport: 'إرسال التقرير عبر البريد الإلكتروني',
+            details: 'التفاصيل',
             viewDetails: 'عرض التفاصيل',
+            year: 'السنة',
+            month: 'الشهر',
+            back: 'رجوع',
         },
-        // Regulatory
-        regulatory: {
-            feed: 'متابعة الرائد الرسمي (JORT)',
-            pending: 'في الانتظار',
-            relevant: 'ذات صلة',
-            ignored: 'تجاهل',
-            noData: 'لم يتم العثور على منشورات',
-            markRelevant: 'تحديد كـ ذات صلة',
-            ignore: 'تجاهل',
-            searchPlaceholder: 'البحث حسب العنوان أو الوزارة...',
-            downloadPdf: 'تحميل PDF الرسمي',
-            viewOnPist: 'عرض على PIST.tn',
-            linkUnavailable: 'الرابط غير متوفر',
-        },
+
+
         articles: {
             title: 'تقسيم حسب الفصول',
             add: 'إضافة فصل',
@@ -493,6 +726,15 @@ const ar = {
             noData: 'لم يتم تسجيل أي فصول لهذا النص.',
             validate: 'تأكيد',
             linkedObligations: 'الالتزامات المرتبطة',
+        },
+        // Regulations (Details)
+        regulationDetails: {
+            backToRegulations: 'العودة إلى النصوص',
+            textualInfo: 'معلومات نصية',
+            issuingAuthority: 'الجهة المصدرة',
+            sectorTheme: 'القطاع / الموضوع',
+            viewOfficialText: 'عرض النص الرسمي',
+            complianceDefinition: 'يحدد هذا النص التزامات الامتثال لشركتكم.',
         },
         checks: {
             title: 'عمليات التحقق',
@@ -510,6 +752,10 @@ const ar = {
             actionPlanHint: 'سيتم إنشاء تنبيه تلقائياً.',
             noActionsDefined: 'لم يتم تحديد أي إجراءات',
             actionItems: 'بنود العمل',
+            actionPlaceholder: 'وصف الإجراء...',
+            saveToAddActions: 'يرجى حفظ التحقق لإضافة إجراءات مفصلة.',
+            history: 'سجل عمليات التحقق',
+            loadingHistory: 'جاري تحميل السجل...',
         },
         checkStatus: {
             PASS: 'مطابق',
@@ -517,6 +763,7 @@ const ar = {
             PARTIAL: 'مطابق جزئياً',
             PENDING: 'قيد الانتظار',
             NOT_APPLICABLE: 'غير مطلوب',
+            ALL: 'الكل',
         },
         // Evidence
         evidence: {
@@ -528,6 +775,38 @@ const ar = {
             preview: 'معاينة',
             remove: 'حذف',
             gpsVerified: 'موقع GPS مؤكد',
+        },
+        regulatory: {
+            feed: 'الرائد الرسمي (JORT)',
+            pending: 'في الانتظار',
+            relevant: 'ذات صلة',
+            ignored: 'تجاهل',
+            noData: 'لا توجد منشورات',
+            markRelevant: 'تحديد كـ ذات صلة',
+            ignore: 'تجاهل',
+            searchPlaceholder: 'البحث حسب العنوان أو الوزارة...',
+            downloadPdf: 'تحميل PDF',
+            viewOnPist: 'عرض على PIST.tn',
+            linkUnavailable: 'الرابط غير متوفر',
+            scrapeNow: 'جلب بيانات جديدة',
+            scraping: 'جاري الجلب...',
+            scrapeSuccess: 'تمت العملية بنجاح: {{new}} جديد، {{duplicates}} مكرر.',
+            scrapeError: 'حدث خطأ أثناء العملية.',
+            loading: 'جار التحميل...',
+            noDataDesc: 'لا توجد بيانات بالمحددات الحالية.',
+            noiseFilter: {
+                label: 'مستوى التصفية',
+                low: 'شامل',
+                medium: 'موصى به',
+                high: 'صارم',
+                tooltips: {
+                    low: 'عرض كل المحتوى (بما في ذلك القرارات الإدارية).',
+                    medium: 'إخفاء القرارات الإدارية (التسميات، الاستقالات...).',
+                    high: 'إخفاء القرارات الإدارية والوزارات غير ذات الصلة.',
+                }
+            },
+            noTitle: 'نص بدون عنوان',
+            defaultType: 'نص'
         },
         form: {
             newObligation: 'التزام جديد',
@@ -569,6 +848,7 @@ const ar = {
             offshoreHint: 'نظام "المصدر الكلي" يفعل التنبيهات والوظائف الخاصة (توقف الأداء، القبول المؤقت).',
             cnssId: 'رقم الضمان الاجتماعي',
             address: 'العنوان',
+            phone: 'الهاتف',
             offshoreDeactivated: 'تم تعطيل الالتزامات الخاصة بنظام المصدر الكلي.',
             obligationsAdded: 'تم إضافة {{count}} التزامات خاصة.',
         },

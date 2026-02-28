@@ -80,6 +80,9 @@ export class CheckRepository {
                     evidence: {
                         select: { id: true, fileName: true, fileType: true },
                     },
+                    user: {
+                        select: { firstName: true, lastName: true },
+                    },
                     actions: {
                         orderBy: { createdAt: 'desc' },
                     },

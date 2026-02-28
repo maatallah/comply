@@ -16,6 +16,10 @@ interface Check {
         titleFr: string;
         titleAr?: string;
     };
+    user?: {
+        firstName: string;
+        lastName: string;
+    };
 }
 
 export default function ChecksPage() {
@@ -33,8 +37,8 @@ export default function ChecksPage() {
         if (status && status !== 'all') params.status = status;
 
         const result = await api.getChecks(params);
-        if (result.success && result.data?.checks) {
-            setChecks(result.data.checks);
+        if (result.success && result.data) {
+            setChecks(Array.isArray(result.data) ? result.data : []);
         } else {
             setChecks([]);
         }
@@ -127,7 +131,7 @@ export default function ChecksPage() {
                                         </td>
                                         <td>{new Date(check.checkDate).toLocaleDateString(i18n.language === 'ar' ? 'ar-TN' : 'fr-TN')}</td>
                                         <td>{getStatusBadge(check.status)}</td>
-                                        <td>{check.performedBy || '-'}</td>
+                                        <td>{check.user ? `${check.user.firstName} ${check.user.lastName}` : check.performedBy || '-'}</td>
                                         <td style={{ maxWidth: '300px' }}>
                                             <div style={{ fontSize: '0.875rem' }} className="truncate">
                                                 {check.findings || '-'}

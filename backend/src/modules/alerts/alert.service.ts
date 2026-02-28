@@ -1,5 +1,7 @@
 import { Alert } from '@prisma/client';
 import prisma from '../../shared/prisma';
+import { emailService } from '../../shared/email/email.service';
+import { emailTemplates } from '../../shared/email/email.templates';
 
 export class AlertService {
 
@@ -74,7 +76,7 @@ export class AlertService {
         severity: string;
         checkId?: string;
     }): Promise<Alert> {
-        return prisma.alert.create({
+        const alert = await prisma.alert.create({
             data: {
                 userId: data.userId,
                 companyId: data.companyId,
@@ -88,6 +90,29 @@ export class AlertService {
                 isRead: false
             }
         });
+
+        // Fire and forget email notify
+        prisma.user.findUnique({
+            where: { id: data.userId },
+            select: { email: true }
+        }).then(user => {
+            if (user && user.email) {
+                const html = emailTemplates.systemAlert({
+                    title: data.titleFr,
+                    message: data.messageFr,
+                    severity: data.severity,
+                    type: data.type,
+                    lang: 'fr'
+                });
+                emailService.sendEmail({
+                    to: user.email,
+                    subject: `Comply Alerte: ${data.titleFr}`,
+                    html
+                }).catch(e => console.error('Email send failed', e));
+            }
+        }).catch(e => console.error('Failed to prepare email alert', e));
+
+        return alert;
     }
 
     /**
@@ -162,29 +187,65 @@ export class AlertService {
                 }
 
                 if (alertData) {
-                    // Check if alert already exists for this deadline/type today
-                    // Simple check to avoid spamming: check if we sent a similar alert recently?
-                    // For MVP, we'll just check if there's an unread alert with same title/message
-                    // Check if alert already exists for this deadline/type today
+                    const currentAlertData = alertData;
+                    // Check if alert already exists for this deadline/type
                     const exists = await prisma.alert.findFirst({
                         where: {
                             userId: user.id,
-                            titleFr: alertData.titleFr,
-                            messageFr: alertData.messageFr,
-                            isRead: false
-                        }
+                            titleFr: currentAlertData.titleFr,
+                            type: currentAlertData.type
+                        },
+                        orderBy: { created: 'desc' }
                     });
 
+                    let shouldCreate = false;
+
                     if (!exists) {
-                        await this.createAlert({
-                            userId: user.id,
-                            companyId: user.companyId,
-                            titleFr: alertData.titleFr,
-                            messageFr: alertData.messageFr,
-                            type: alertData.type,
-                            severity: alertData.severity,
-                        });
-                        createdCount++;
+                        shouldCreate = true;
+                    } else if (exists.isRead === false) {
+                        const hoursSince = (now.getTime() - exists.created.getTime()) / (1000 * 60 * 60);
+                        if (exists.severity === 'CRITICAL' && hoursSince >= 24) shouldCreate = true;
+                        else if (exists.severity === 'HIGH' && hoursSince >= 72) shouldCreate = true;
+                        else if (exists.severity === 'MEDIUM' && hoursSince >= 168) shouldCreate = true;
+                    }
+
+                    if (shouldCreate) {
+                        if (exists && exists.isRead === false) {
+                            // Update timestamp to reset interval and trigger email
+                            await prisma.alert.update({
+                                where: { id: exists.id },
+                                data: { created: new Date() }
+                            });
+
+                            // Send repeated email
+                            prisma.user.findUnique({ where: { id: user.id }, select: { email: true } }).then(userData => {
+                                if (userData && userData.email) {
+                                    const html = emailTemplates.systemAlert({
+                                        title: currentAlertData.titleFr,
+                                        message: currentAlertData.messageFr,
+                                        severity: currentAlertData.severity,
+                                        type: currentAlertData.type,
+                                        lang: 'fr'
+                                    });
+                                    emailService.sendEmail({
+                                        to: userData.email,
+                                        subject: `[Rappel] Comply Alerte: ${currentAlertData.titleFr}`,
+                                        html
+                                    }).catch(console.error);
+                                }
+                            }).catch(console.error);
+                            createdCount++;
+                        } else {
+                            await this.createAlert({
+                                userId: user.id,
+                                companyId: user.companyId,
+                                titleFr: currentAlertData.titleFr,
+                                messageFr: currentAlertData.messageFr,
+                                type: currentAlertData.type,
+                                severity: currentAlertData.severity,
+                            });
+                            createdCount++;
+                        }
                     }
                 }
             }
@@ -192,15 +253,6 @@ export class AlertService {
 
         console.log(`✅ Generated ${createdCount} new alerts.`);
         return { created: createdCount };
-    }
-
-    /**
-     * Delete all alerts for a user (Debug/Test)
-     */
-    async deleteAllAlerts(userId: string): Promise<void> {
-        await prisma.alert.deleteMany({
-            where: { userId }
-        });
     }
 
     /**
@@ -240,63 +292,6 @@ export class AlertService {
             },
             data: { isRead: true }
         });
-    }
-
-    /**
-     * Generate sample alerts for a user (Debug/Test)
-     */
-    async generateTestAlerts(userId: string, companyId: string): Promise<number> {
-        const samples = [
-            {
-                titleFr: 'Rappel de TVA',
-                messageFr: 'Votre déclaration de TVA est due dans 2 jours.',
-                type: 'DEADLINE_APPROACHING',
-                severity: 'HIGH'
-            },
-            {
-                titleFr: 'Échéance dépassée',
-                messageFr: 'Le paiement de la taxe professionnelle est en retard.',
-                type: 'DEADLINE_MISSED',
-                severity: 'CRITICAL'
-            },
-            {
-                titleFr: 'Nouveau document requis',
-                messageFr: 'Veuillez télécharger le PV de l\'AG annuelle.',
-                type: 'DOCUMENT_REQUIRED',
-                severity: 'MEDIUM'
-            },
-            {
-                titleFr: 'Mise à jour système',
-                messageFr: 'De nouvelles réglementations Offshore sont disponibles.',
-                type: 'SYSTEM',
-                severity: 'LOW'
-            }
-        ];
-
-        for (const s of samples) {
-            // Duplicate check
-            const exists = await prisma.alert.findFirst({
-                where: {
-                    userId,
-                    titleFr: s.titleFr,
-                    messageFr: s.messageFr,
-                    isRead: false
-                }
-            });
-
-            if (!exists) {
-                await this.createAlert({
-                    userId,
-                    companyId,
-                    titleFr: s.titleFr,
-                    messageFr: s.messageFr,
-                    type: s.type,
-                    severity: s.severity
-                });
-            }
-        }
-
-        return samples.length;
     }
 }
 

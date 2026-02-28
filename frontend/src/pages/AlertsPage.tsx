@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useApi } from '../hooks/useApi';
 import { Link } from 'react-router-dom';
 import { Bell, CheckCheck, Inbox, AlertTriangle, Trash2, Square, CheckSquare, CheckCircle, Eye } from 'lucide-react';
+import ConfirmModal from '../components/ConfirmModal';
 
 interface Alert {
     id: string;
@@ -24,6 +25,7 @@ export default function AlertsPage() {
     const [alerts, setAlerts] = useState<Alert[]>([]);
     const [loading, setLoading] = useState(true);
     const [selectedIds, setSelectedIds] = useState<string[]>([]);
+    const [confirmModal, setConfirmModal] = useState<{ isOpen: boolean; type: 'single' | 'bulk'; id?: string } | null>(null);
 
     const fetchAlerts = async () => {
         setLoading(true);
@@ -45,7 +47,6 @@ export default function AlertsPage() {
 
 
     const handleDelete = async (id: string) => {
-        if (!confirm(t('messages.deleteConfirm') || 'Delete this alert?')) return;
         const result = await api.deleteAlert(id);
         if (result.success) {
             setAlerts(prev => prev.filter(a => a.id !== id));
@@ -60,8 +61,14 @@ export default function AlertsPage() {
         if (selectedIds.length === 0) return;
 
         if (action === 'delete') {
-            if (!confirm(t('messages.deleteConfirm') || 'Delete selected alerts?')) return;
+            setConfirmModal({ isOpen: true, type: 'bulk' });
+            return;
         }
+
+        executeBulkAction('read');
+    };
+
+    const executeBulkAction = async (action: 'read' | 'delete') => {
 
         const result = await api.bulkAlertAction(selectedIds, action);
         if (result.success) {
@@ -91,23 +98,7 @@ export default function AlertsPage() {
         }
     };
 
-    const handleGenerateTestData = async () => {
-        const result = await api.generateTestAlerts();
-        if (result.success) {
-            fetchAlerts();
-            window.dispatchEvent(new Event('alertAction'));
-        }
-    };
 
-    const handleClearAll = async () => {
-        if (!confirm('Are you sure you want to PERMANENTLY delete all alerts?')) return;
-        const result = await api.clearAllAlerts();
-        if (result.success) {
-            setAlerts([]);
-            setSelectedIds([]);
-            window.dispatchEvent(new Event('alertAction'));
-        }
-    };
 
     const getSeverityIcon = (severity: string) => {
         switch (severity) {
@@ -125,16 +116,6 @@ export default function AlertsPage() {
         <div>
             <div className="page-header">
                 <h1 className="page-title">{t('alerts.title')}</h1>
-                <div style={{ display: 'flex', gap: '0.75rem' }}>
-                    <button className="btn btn-secondary" onClick={handleGenerateTestData}>
-                        {i18n.language === 'ar' ? 'توليد بيانات اختبار' : 'Générer des tests'}
-                    </button>
-                    {alerts.length > 0 && (
-                        <button className="btn btn-secondary danger" onClick={handleClearAll} style={{ color: 'var(--danger)' }}>
-                            {i18n.language === 'ar' ? 'مسح الكل' : 'Effacer tout'}
-                        </button>
-                    )}
-                </div>
             </div>
 
             {/* Bulk Toolbar */}
@@ -144,7 +125,7 @@ export default function AlertsPage() {
                         <button className="btn btn-sm btn-secondary" onClick={handleSelectAll} style={{ padding: '0.25rem' }}>
                             {selectedIds.length === alerts.length ? <CheckSquare size={20} /> : <Square size={20} />}
                         </button>
-                        <span>{selectedIds.length} {t('common.selected') || 'sélectionnés'}</span>
+                        <span>{selectedIds.length} {t('common.selected')}</span>
                     </div>
                     <div style={{ display: 'flex', gap: '0.75rem' }}>
                         <button className="btn btn-sm btn-primary" onClick={() => handleBulkAction('read')}>
@@ -177,7 +158,7 @@ export default function AlertsPage() {
                                 onChange={handleSelectAll}
                             />
                             <span style={{ fontSize: '0.9rem', color: 'var(--gray-600)' }}>
-                                {t('common.selectAll') || 'Tout sélectionner'}
+                                {t('common.selectAll')}
                             </span>
                         </div>
 
@@ -190,7 +171,7 @@ export default function AlertsPage() {
                                     onChange={() => handleToggleSelect(alert.id)}
                                 />
                                 <div
-                                    className={`card alert-card ${!alert.isRead ? 'unread' : ''} severity-${alert.severity}`}
+                                    className={`card alert-card ${!alert.isRead ? 'unread' : ''} severity-${alert.severity} ${alert.severity === 'CRITICAL' ? 'bg-danger-light' : ''}`}
                                     style={{ flex: 1 }}
                                 >
                                     <div className="alert-card-header">
@@ -209,11 +190,10 @@ export default function AlertsPage() {
                                                 {new Date(alert.createdAt).toLocaleString(i18n.language === 'ar' ? 'ar-TN' : 'fr-TN')}
                                             </span>
                                             <button
-                                                className={`btn-icon text-danger ${!selectedIds.includes(alert.id) ? 'disabled' : ''}`}
-                                                onClick={() => selectedIds.includes(alert.id) && handleDelete(alert.id)}
-                                                title={selectedIds.includes(alert.id) ? t('common.delete') : t('common.selectFirst') || 'Sélectionner d\'abord'}
-                                                style={{ padding: '0.25rem', opacity: selectedIds.includes(alert.id) ? 1 : 0.4, cursor: selectedIds.includes(alert.id) ? 'pointer' : 'not-allowed' }}
-                                                disabled={!selectedIds.includes(alert.id)}
+                                                className={`btn-icon text-danger`}
+                                                onClick={(e) => { e.stopPropagation(); setConfirmModal({ isOpen: true, type: 'single', id: alert.id }); }}
+                                                title={t('common.delete')}
+                                                style={{ padding: '0.25rem', cursor: 'pointer' }}
                                             >
                                                 <Trash2 size={16} />
                                             </button>
@@ -229,7 +209,7 @@ export default function AlertsPage() {
                                             <Link
                                                 to={`/action-plans?highlight=${alert.checkId}`}
                                                 className="btn btn-sm btn-outline-primary"
-                                                style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                                                style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--primary)' }}
                                             >
                                                 <Eye size={14} />
                                                 {t('alerts.viewDetails') || 'Voir les détails'}
@@ -243,6 +223,23 @@ export default function AlertsPage() {
                     </div>
                 )}
             </div>
+
+            <ConfirmModal
+                isOpen={!!confirmModal?.isOpen}
+                onClose={() => setConfirmModal(null)}
+                onConfirm={() => {
+                    if (confirmModal?.type === 'single' && confirmModal.id) {
+                        handleDelete(confirmModal.id);
+                    } else if (confirmModal?.type === 'bulk') {
+                        executeBulkAction('delete');
+                    }
+                    setConfirmModal(null);
+                }}
+                title={t('common.delete') || 'Supprimer'}
+                message={t('messages.deleteConfirm') || 'Êtes-vous sûr de vouloir supprimer cet élément ?'}
+                confirmLabel={t('common.delete') || 'Supprimer'}
+                isDanger={true}
+            />
         </div>
     );
 }

@@ -30,12 +30,12 @@ export default function CheckHistory({ controlId, currentCheckId }: CheckHistory
         }
     }, [controlId, currentCheckId]);
 
-    if (loading) return <div className="text-center py-4 text-gray-500 text-sm">Chargement de l'historique...</div>;
+    if (loading) return <div className="text-center py-4 text-gray-500 text-sm">{t('checks.loadingHistory')}</div>;
     if (history.length === 0) return null;
 
     return (
         <div className="mt-8 border-t border-gray-200 pt-6">
-            <h3 className="text-lg font-semibold mb-4 text-gray-800">Historique des vérifications</h3>
+            <h3 className="text-lg font-semibold mb-4 text-gray-800">{t('checks.history')}</h3>
             <div className="space-y-4">
                 {history.map((check) => (
                     <div key={check.id} className="bg-gray-50 rounded-lg p-4 border border-gray-200">
@@ -45,7 +45,7 @@ export default function CheckHistory({ controlId, currentCheckId }: CheckHistory
                                     {t(`checkStatus.${check.status}`)}
                                 </span>
                                 <span className="text-gray-500 text-sm ml-3">
-                                    {new Date(check.checkDate).toLocaleDateString()}
+                                    {new Date(check.checkDate).toLocaleDateString('fr-FR')}
                                 </span>
                             </div>
                             <span className="text-xs text-gray-400">
@@ -58,7 +58,7 @@ export default function CheckHistory({ controlId, currentCheckId }: CheckHistory
                             <div>
                                 {check.findings && (
                                     <div className="mb-2">
-                                        <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Constats</div>
+                                        <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">{t('checks.findings')}</div>
                                         <p className="text-sm text-gray-800 bg-white p-2 rounded border border-gray-100 shadow-sm">
                                             {check.findings}
                                         </p>
@@ -67,7 +67,7 @@ export default function CheckHistory({ controlId, currentCheckId }: CheckHistory
 
                                 {(check.actions?.length > 0 || check.correctiveActions) && (
                                     <div>
-                                        <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Actions</div>
+                                        <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">{t('checks.correctiveActions')}</div>
                                         {check.actions?.length > 0 ? (
                                             <ul className="list-disc list-inside text-sm text-gray-700 bg-white p-2 rounded border border-gray-100 shadow-sm">
                                                 {check.actions.map((action: any) => (
@@ -88,7 +88,7 @@ export default function CheckHistory({ controlId, currentCheckId }: CheckHistory
                             {/* Evidence */}
                             {check.evidence?.length > 0 && (
                                 <div>
-                                    <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Preuves</div>
+                                    <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">{t('checks.evidence')}</div>
                                     <div className="grid gap-2">
                                         {check.evidence.map((ev: any) => (
                                             <div key={ev.id} className="flex items-center gap-2 p-2 bg-white border border-gray-200 rounded shadow-sm text-sm">

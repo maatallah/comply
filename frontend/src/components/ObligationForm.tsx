@@ -28,7 +28,7 @@ interface ObligationFormProps {
     onCancel: () => void;
 }
 
-const FREQUENCIES = ['CONTINUOUS', 'MONTHLY', 'QUARTERLY', 'ANNUAL', 'BIENNIAL', 'TRIENNIAL'];
+const FREQUENCIES = ['CONTINUOUS', 'MONTHLY', 'QUARTERLY', 'SEMI_ANNUAL', 'ANNUAL', 'BIENNIAL', 'TRIENNIAL'];
 const RISK_LEVELS = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'];
 
 // Map backend error codes to i18n keys
