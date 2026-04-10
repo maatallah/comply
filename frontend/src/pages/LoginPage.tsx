@@ -4,11 +4,13 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Shield } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { isDemoMode } from '../demo/mockServer';
 
 export default function LoginPage() {
     const { t, i18n } = useTranslation();
     const { login } = useAuth();
     const navigate = useNavigate();
+    const demoMode = isDemoMode();
 
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -44,6 +46,12 @@ export default function LoginPage() {
                 </div>
                 <h1 className="login-title">TuniCompliance</h1>
                 <p className="login-subtitle">{t('auth.login')}</p>
+
+                {demoMode && (
+                    <div className="alert info" style={{ marginBottom: '1rem' }}>
+                        Mode démo offline : utilisez n’importe quels identifiants.
+                    </div>
+                )}
 
                 {error && <div className="login-error">{error}</div>}
 

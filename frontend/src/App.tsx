@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, HashRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ToastProvider } from './context/ToastContext';
 import ErrorBoundary from './components/ErrorBoundary';
@@ -20,6 +20,10 @@ import AuditDetailsPage from './pages/AuditDetailsPage';
 import NewAuditPage from './pages/NewAuditPage';
 import './i18n';
 import './index.css';
+import { isDemoMode } from './demo/mockServer';
+
+const DEMO_MODE = isDemoMode();
+const Router = DEMO_MODE ? HashRouter : BrowserRouter;
 
 // Protected Route wrapper
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -94,13 +98,13 @@ function AppRoutes() {
 function App() {
   return (
     <ErrorBoundary>
-      <BrowserRouter>
+      <Router>
         <AuthProvider>
           <ToastProvider>
             <AppRoutes />
           </ToastProvider>
         </AuthProvider>
-      </BrowserRouter>
+      </Router>
     </ErrorBoundary>
   );
 }

@@ -1,0 +1,64 @@
+
+≡ƒôï ALL ACTION ITEMS IN DATABASE
+
+Total Action Items: 10
+
+ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ
+
+1. ΓÅ│ Finaliser et signer contrats CDD pour 2 nouveaux recrut├⌐s (p├⌐riode stage avril 2026)
+   Status: PENDING | Priority: ≡ƒƒá HIGH
+   Check Control: Contrats de travail CDD sign├⌐s
+   Due: 30/04/2026
+
+2. ΓÅ│ Demander renouvellement attestation CNSS 2026 avant 01 juin (expiration 15 juin)
+   Status: PENDING | Priority: ≡ƒƒí MEDIUM
+   Check Control: Attestation de r├⌐gularit├⌐ CNSS
+   Due: 01/06/2026
+
+3. ΓÅ│ Audit interne post-correction: V├⌐rifier compl├⌐tude du registre et conformit├⌐ avec BSD/factures
+   Status: PENDING | Priority: ≡ƒƒí MEDIUM
+   Check Control: Registre des d├⌐chets
+   Due: 15/06/2026
+
+4. ΓÅ│ V├⌐rifier la conformit├⌐ des extincteurs apr├¿s renouvellement des ├⌐tiquettes + photos documentation
+   Status: PENDING | Priority: ≡ƒƒí MEDIUM
+   Check Control: Extincteurs - ├ëtiquettes de v├⌐rification
+   Due: 10/05/2026
+
+5. ΓÅ│ Former responsable qualit├⌐ sur proc├⌐dure de documentation des d├⌐chets (template + check-list mensuelle)
+   Status: PENDING | Priority: ≡ƒƒá HIGH
+   Check Control: Registre des d├⌐chets
+   Due: 10/05/2026
+
+6. ≡ƒöä Renouveler les 3 ├⌐tiquettes de v├⌐rification des extincteurs (zone stockage) - D├⌐cembre 2025 expir├⌐es
+   Status: IN_PROGRESS | Priority: ≡ƒƒá HIGH
+   Check Control: Extincteurs - ├ëtiquettes de v├⌐rification
+   Due: 30/04/2026
+
+7. Γ£à Renouvellement attestation CNSS 2025 (r├⌐alis├⌐ et pr├⌐sent├⌐ en d├⌐cembre)
+   Status: COMPLETED | Priority: ≡ƒƒá HIGH
+   Check Control: Attestation de r├⌐gularit├⌐ CNSS
+   Due: 15/12/2025
+
+8. ≡ƒöä Compl├⌐ter le registre des d├⌐chets - R├⌐cup├⌐rer 5 enl├¿vements manquants de f├⌐vrier 2026 aupr├¿s de GEVAL
+   Status: IN_PROGRESS | Priority: ≡ƒö┤ CRITICAL
+   Check Control: Registre des d├⌐chets
+   Due: 15/05/2026
+
+9. ≡ƒöä Actualiser les 3 entr├⌐es mars manquantes du registre (dates, poids, num├⌐ros BSD)
+   Status: IN_PROGRESS | Priority: ≡ƒö┤ CRITICAL
+   Check Control: Registre des d├⌐chets
+   Due: 20/05/2026
+
+10. Γ£à Clarifier et documenter le registre des heures de travail (structure des pauses)
+   Status: COMPLETED | Priority: ≡ƒƒá HIGH
+   Check Control: Audit BSCI - Rapport d'audit
+   Due: 15/03/2026
+
+ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ
+
+≡ƒôè SUMMARY BY STATUS:
+
+  PENDING: 5
+  IN_PROGRESS: 3
+  COMPLETED: 2
